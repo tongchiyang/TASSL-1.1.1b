@@ -203,6 +203,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     ctx->buf_len = 0;
     ctx->final_used = 0;
     ctx->block_mask = ctx->cipher->block_size - 1;
+	ctx->step = 0;
     return 1;
 }
 
@@ -381,6 +382,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_INVALID_OPERATION);
         return 0;
     }
+	ctx->step = 1; //set update flag. add by yangliqiang
 
     return evp_EncryptDecryptUpdate(ctx, out, outl, in, inl);
 }
@@ -396,7 +398,8 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
     int n, ret;
     unsigned int i, b, bl;
-
+	ctx->step = 2;    //set update flag. add by yangliqiang
+	
     /* Prevent accidental use of decryption context when encrypting */
     if (!ctx->encrypt) {
         EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_INVALID_OPERATION);
@@ -445,6 +448,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 {
     int fix_len, cmpl = inl;
     unsigned int b;
+	ctx->step = 1; //set update flag. add by yangliqiang
 
     /* Prevent accidental use of encryption context when decrypting */
     if (ctx->encrypt) {
@@ -526,7 +530,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
     int i, n;
     unsigned int b;
-
+	ctx->step = 2;
     /* Prevent accidental use of encryption context when decrypting */
     if (ctx->encrypt) {
         EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_INVALID_OPERATION);
