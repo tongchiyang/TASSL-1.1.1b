@@ -1184,6 +1184,41 @@
 #define NID_sm3WithRSAEncryption                1144
 #define OBJ_sm3WithRSAEncryption                OBJ_sm_scheme,504L
 
+/*add by yangliqiang for gmssl,begin.*/
+#define SN_sm1_ecb              "SM1-ECB"
+#define LN_sm1_ecb              "sm1-ecb"
+#define NID_sm1_ecb             1196
+#define OBJ_sm1_ecb             OBJ_sm_scheme,102L,1L
+
+#define SN_sm1_cbc              "SM1-CBC"
+#define LN_sm1_cbc              "sm1-cbc"
+#define NID_sm1_cbc             1197
+#define OBJ_sm1_cbc             OBJ_sm_scheme,102L,2L
+
+#define SN_sms4_ecb             "SMS4-ECB"
+#define LN_sms4_ecb             "sms4-ecb"
+#define NID_sms4_ecb            1198
+#define OBJ_sms4_ecb            OBJ_sm_scheme,104L,1L
+
+#define SN_sms4_cbc             "SMS4-CBC"
+#define LN_sms4_cbc             "sms4-cbc"
+#define NID_sms4_cbc            1199
+#define OBJ_sms4_cbc            OBJ_sm_scheme,104L,2L
+
+#define SN_sm2sign              "sm2sign"
+#define NID_sm2sign             1200
+#define OBJ_sm2sign             OBJ_sm_scheme,301L,1L
+
+#define SN_sm2exchange          "sm2exchange"
+#define NID_sm2exchange         1201
+#define OBJ_sm2exchange         OBJ_sm_scheme,301L,2L
+
+#define SN_sm2encrypt           "sm2encrypt"
+#define NID_sm2encrypt          1202
+#define OBJ_sm2encrypt          OBJ_sm_scheme,301L,3L
+
+/*add by yangliqiang for gmssl,end.*/
+
 #define LN_hmacWithSHA224               "hmacWithSHA224"
 #define NID_hmacWithSHA224              798
 #define OBJ_hmacWithSHA224              OBJ_rsadsi,2L,8L

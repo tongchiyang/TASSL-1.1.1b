@@ -1,358 +1,262 @@
-/*
- * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
- *
- * Licensed under the OpenSSL license (the "License").  You may not use
- * this file except in compliance with the License.  You can obtain a copy
- * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
- */
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <openssl/e_os2.h>
+#include <unistd.h>
+#include <string.h>
+#include <openssl/engine.h>
+#include <openssl/conf.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
+#include <openssl/ossl_typ.h>
 
-# include "testutil.h"
+#include "internal/evp_locl.h"
+#include "internal/rsa_locl.h"
+#include "internal/ec_lcl.h"
 
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/buffer.h>
-# include <openssl/crypto.h>
-# include <openssl/engine.h>
-# include <openssl/rsa.h>
-# include <openssl/err.h>
+static void display_openssl_errors(int l) {
+	const char *file;
+	char buf[120];
+	int e, line;
 
-static void display_engine_list(void)
-{
-    ENGINE *h;
-    int loop;
+	if (ERR_peek_error() == 0)
+		return;
+	fprintf(stderr, "At main.c:%d:\n", l);
 
-    loop = 0;
-    for (h = ENGINE_get_first(); h != NULL; h = ENGINE_get_next(h)) {
-        TEST_info("#%d: id = \"%s\", name = \"%s\"",
-               loop++, ENGINE_get_id(h), ENGINE_get_name(h));
-    }
-
-    /*
-     * ENGINE_get_first() increases the struct_ref counter, so we must call
-     * ENGINE_free() to decrease it again
-     */
-    ENGINE_free(h);
+	while ((e = ERR_get_error_line(&file, &line))) {
+		ERR_error_string(e, buf);
+		fprintf(stderr, "- SSL %s: %s:%d\n", buf, file, line);
+	}
+}
+void printHex(unsigned char* _buf,int _lenth) {
+	int i=0;
+	printf("\n------------hex begin-----------\n");
+	for(i=0;i<_lenth;i++){
+		printf("%02x",_buf[i]);
+	}
+	printf("\n------------hex end------------\n");
 }
 
-#define NUMTOADD 512
+int main() {
+	ENGINE	*engine;
+	int	ret,num=20;
+	char	buf[20],*name;
+	OpenSSL_add_all_algorithms();
+	EVP_MD_CTX* ctx = NULL;
+	const EVP_MD *digest_algo;
+	unsigned char digest[EVP_MAX_MD_SIZE];
+	EC_KEY *ec_key = NULL;
+	size_t len;
+	char msg1[]="Hello Dig1";
+	char msg2[]="Hello Dig2";
 
-static int test_engines(void)
-{
-    ENGINE *block[NUMTOADD];
-    char buf[256];
-    const char *id, *name;
-    ENGINE *ptr;
-    int loop;
-    int to_return = 0;
-    ENGINE *new_h1 = NULL;
-    ENGINE *new_h2 = NULL;
-    ENGINE *new_h3 = NULL;
-    ENGINE *new_h4 = NULL;
+	//EVP_PKEY_CTX *pkey_ctx;
+	/*
+	const char* efile = "/home/gmssl/thirdparty/GmSSL-master-install/ssl/openssl.cnf";
+	ret = CONF_modules_load_file(NULL, "engines", 0);
+	if (ret <= 0) {
+		fprintf(stderr, "cannot load %s\n", efile);
+		display_openssl_errors(__LINE__);
+		exit(1);
+	}
 
-    memset(block, 0, sizeof(block));
-    if (!TEST_ptr(new_h1 = ENGINE_new())
-            || !TEST_true(ENGINE_set_id(new_h1, "test_id0"))
-            || !TEST_true(ENGINE_set_name(new_h1, "First test item"))
-            || !TEST_ptr(new_h2 = ENGINE_new())
-            || !TEST_true(ENGINE_set_id(new_h2, "test_id1"))
-            || !TEST_true(ENGINE_set_name(new_h2, "Second test item"))
-            || !TEST_ptr(new_h3 = ENGINE_new())
-            || !TEST_true(ENGINE_set_id(new_h3, "test_id2"))
-            || !TEST_true(ENGINE_set_name(new_h3, "Third test item"))
-            || !TEST_ptr(new_h4 = ENGINE_new())
-            || !TEST_true(ENGINE_set_id(new_h4, "test_id3"))
-            || !TEST_true(ENGINE_set_name(new_h4, "Fourth test item")))
-        goto end;
-    TEST_info("Engines:");
-    display_engine_list();
-
-    if (!TEST_true(ENGINE_add(new_h1)))
-        goto end;
-    TEST_info("Engines:");
-    display_engine_list();
-
-    ptr = ENGINE_get_first();
-    if (!TEST_true(ENGINE_remove(ptr)))
-        goto end;
-    ENGINE_free(ptr);
-    TEST_info("Engines:");
-    display_engine_list();
-
-    if (!TEST_true(ENGINE_add(new_h3))
-            || !TEST_true(ENGINE_add(new_h2)))
-        goto end;
-    TEST_info("Engines:");
-    display_engine_list();
-
-    if (!TEST_true(ENGINE_remove(new_h2)))
-        goto end;
-    TEST_info("Engines:");
-    display_engine_list();
-
-    if (!TEST_true(ENGINE_add(new_h4)))
-        goto end;
-    TEST_info("Engines:");
-    display_engine_list();
-
-    /* Should fail. */
-    if (!TEST_false(ENGINE_add(new_h3)))
-        goto end;
-    ERR_clear_error();
-
-    /* Should fail. */
-    if (!TEST_false(ENGINE_remove(new_h2)))
-        goto end;
-    ERR_clear_error();
-
-    if (!TEST_true(ENGINE_remove(new_h3)))
-        goto end;
-    TEST_info("Engines:");
-    display_engine_list();
-
-    if (!TEST_true(ENGINE_remove(new_h4)))
-        goto end;
-    TEST_info("Engines:");
-    display_engine_list();
-
-    /*
-     * Depending on whether there's any hardware support compiled in, this
-     * remove may be destined to fail.
-     */
-    if ((ptr = ENGINE_get_first()) != NULL) {
-        if (!ENGINE_remove(ptr))
-            TEST_info("Remove failed - probably no hardware support present");
-    }
-    ENGINE_free(ptr);
-    TEST_info("Engines:");
-    display_engine_list();
-
-    if (!TEST_true(ENGINE_add(new_h1))
-            || !TEST_true(ENGINE_remove(new_h1)))
-        goto end;
-
-    TEST_info("About to beef up the engine-type list");
-    for (loop = 0; loop < NUMTOADD; loop++) {
-        sprintf(buf, "id%d", loop);
-        id = OPENSSL_strdup(buf);
-        sprintf(buf, "Fake engine type %d", loop);
-        name = OPENSSL_strdup(buf);
-        if (!TEST_ptr(block[loop] = ENGINE_new())
-                || !TEST_true(ENGINE_set_id(block[loop], id))
-                || !TEST_true(ENGINE_set_name(block[loop], name)))
-            goto end;
-    }
-    for (loop = 0; loop < NUMTOADD; loop++) {
-        if (!TEST_true(ENGINE_add(block[loop]))) {
-            test_note("Adding stopped at %d, (%s,%s)",
-                      loop, ENGINE_get_id(block[loop]),
-                      ENGINE_get_name(block[loop]));
-            goto cleanup_loop;
-        }
-    }
- cleanup_loop:
-    TEST_info("About to empty the engine-type list");
-    while ((ptr = ENGINE_get_first()) != NULL) {
-        if (!TEST_true(ENGINE_remove(ptr)))
-            goto end;
-        ENGINE_free(ptr);
-    }
-    for (loop = 0; loop < NUMTOADD; loop++) {
-        OPENSSL_free((void *)ENGINE_get_id(block[loop]));
-        OPENSSL_free((void *)ENGINE_get_name(block[loop]));
-    }
-    to_return = 1;
-
- end:
-    ENGINE_free(new_h1);
-    ENGINE_free(new_h2);
-    ENGINE_free(new_h3);
-    ENGINE_free(new_h4);
-    for (loop = 0; loop < NUMTOADD; loop++)
-        ENGINE_free(block[loop]);
-    return to_return;
-}
-
-/* Test EVP_PKEY method */
-static EVP_PKEY_METHOD *test_rsa = NULL;
-
-static int called_encrypt = 0;
-
-/* Test function to check operation has been redirected */
-static int test_encrypt(EVP_PKEY_CTX *ctx, unsigned char *sig,
-                        size_t *siglen, const unsigned char *tbs, size_t tbslen)
-{
-    called_encrypt = 1;
-    return 1;
-}
-
-static int test_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
-                           const int **pnids, int nid)
-{
-    static const int rnid = EVP_PKEY_RSA;
-    if (pmeth == NULL) {
-        *pnids = &rnid;
-        return 1;
-    }
-
-    if (nid == EVP_PKEY_RSA) {
-        *pmeth = test_rsa;
-        return 1;
-    }
-
-    *pmeth = NULL;
-    return 0;
-}
-
-/* Return a test EVP_PKEY value */
-
-static EVP_PKEY *get_test_pkey(void)
-{
-    static unsigned char n[] =
-        "\x00\xAA\x36\xAB\xCE\x88\xAC\xFD\xFF\x55\x52\x3C\x7F\xC4\x52\x3F"
-        "\x90\xEF\xA0\x0D\xF3\x77\x4A\x25\x9F\x2E\x62\xB4\xC5\xD9\x9C\xB5"
-        "\xAD\xB3\x00\xA0\x28\x5E\x53\x01\x93\x0E\x0C\x70\xFB\x68\x76\x93"
-        "\x9C\xE6\x16\xCE\x62\x4A\x11\xE0\x08\x6D\x34\x1E\xBC\xAC\xA0\xA1"
-        "\xF5";
-    static unsigned char e[] = "\x11";
-
-    RSA *rsa = RSA_new();
-    EVP_PKEY *pk = EVP_PKEY_new();
-
-    if (rsa == NULL || pk == NULL || !EVP_PKEY_assign_RSA(pk, rsa)) {
-        RSA_free(rsa);
-        EVP_PKEY_free(pk);
-        return NULL;
-    }
-
-    if (!RSA_set0_key(rsa, BN_bin2bn(n, sizeof(n)-1, NULL),
-                      BN_bin2bn(e, sizeof(e)-1, NULL), NULL)) {
-        EVP_PKEY_free(pk);
-        return NULL;
-    }
-
-    return pk;
-}
-
-static int test_redirect(void)
-{
-    const unsigned char pt[] = "Hello World\n";
-    unsigned char *tmp = NULL;
-    size_t len;
-    EVP_PKEY_CTX *ctx = NULL;
-    ENGINE *e = NULL;
-    EVP_PKEY *pkey = NULL;
-
-    int to_return = 0;
-
-    if (!TEST_ptr(pkey = get_test_pkey()))
-        goto err;
-
-    len = EVP_PKEY_size(pkey);
-    if (!TEST_ptr(tmp = OPENSSL_malloc(len)))
-        goto err;
-
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, NULL)))
-        goto err;
-    TEST_info("EVP_PKEY_encrypt test: no redirection");
-    /* Encrypt some data: should succeed but not be redirected */
-    if (!TEST_int_gt(EVP_PKEY_encrypt_init(ctx), 0)
-            || !TEST_int_gt(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)), 0)
-            || !TEST_false(called_encrypt))
-        goto err;
-    EVP_PKEY_CTX_free(ctx);
-    ctx = NULL;
-
-    /* Create a test ENGINE */
-    if (!TEST_ptr(e = ENGINE_new())
-            || !TEST_true(ENGINE_set_id(e, "Test redirect engine"))
-            || !TEST_true(ENGINE_set_name(e, "Test redirect engine")))
-        goto err;
-
-    /*
-     * Try to create a context for this engine and test key.
-     * Try setting test key engine. Both should fail because the
-     * engine has no public key methods.
-     */
-    if (!TEST_ptr_null(EVP_PKEY_CTX_new(pkey, e))
-            || !TEST_int_le(EVP_PKEY_set1_engine(pkey, e), 0))
-        goto err;
-
-    /* Setup an empty test EVP_PKEY_METHOD and set callback to return it */
-    if (!TEST_ptr(test_rsa = EVP_PKEY_meth_new(EVP_PKEY_RSA, 0)))
-        goto err;
-    ENGINE_set_pkey_meths(e, test_pkey_meths);
-
-    /* Getting a context for test ENGINE should now succeed */
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, e)))
-        goto err;
-    /* Encrypt should fail because operation is not supported */
-    if (!TEST_int_le(EVP_PKEY_encrypt_init(ctx), 0))
-        goto err;
-    EVP_PKEY_CTX_free(ctx);
-    ctx = NULL;
-
-    /* Add test encrypt operation to method */
-    EVP_PKEY_meth_set_encrypt(test_rsa, 0, test_encrypt);
-
-    TEST_info("EVP_PKEY_encrypt test: redirection via EVP_PKEY_CTX_new()");
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, e)))
-        goto err;
-    /* Encrypt some data: should succeed and be redirected */
-    if (!TEST_int_gt(EVP_PKEY_encrypt_init(ctx), 0)
-            || !TEST_int_gt(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)), 0)
-            || !TEST_true(called_encrypt))
-        goto err;
-
-    EVP_PKEY_CTX_free(ctx);
-    ctx = NULL;
-    called_encrypt = 0;
-
-    /* Create context with default engine: should not be redirected */
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, NULL))
-            || !TEST_int_gt(EVP_PKEY_encrypt_init(ctx), 0)
-            || !TEST_int_gt(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)), 0)
-            || !TEST_false(called_encrypt))
-        goto err;
-
-    EVP_PKEY_CTX_free(ctx);
-    ctx = NULL;
-
-    /* Set engine explicitly for test key */
-    if (!TEST_true(EVP_PKEY_set1_engine(pkey, e)))
-        goto err;
-
-    TEST_info("EVP_PKEY_encrypt test: redirection via EVP_PKEY_set1_engine()");
-
-    /* Create context with default engine: should be redirected now */
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, NULL))
-            || !TEST_int_gt(EVP_PKEY_encrypt_init(ctx), 0)
-            || !TEST_int_gt(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)), 0)
-            || !TEST_true(called_encrypt))
-        goto err;
-
-    to_return = 1;
-
- err:
-    EVP_PKEY_CTX_free(ctx);
-    EVP_PKEY_free(pkey);
-    ENGINE_free(e);
-    OPENSSL_free(tmp);
-    return to_return;
-}
-#endif
-
-int setup_tests(void)
-{
-#ifdef OPENSSL_NO_ENGINE
-    TEST_note("No ENGINE support");
+	char *p;
+	CONF *conf;
+	long eline;
+	conf=NCONF_new(NULL);
+	if(!NCONF_load(conf,efile,&eline)){
+		printf("load openssl.cnf error\n");
+	}
+	p=NCONF_get_string(conf,"skf_section","SO_PATH");
+	printf("p=%s\n",p);
+	
+	ENGINE_add_conf_module();
+	*/
+#if OPENSSL_VERSION_NUMBER>=0x10100000
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
+		| OPENSSL_INIT_ADD_ALL_DIGESTS \
+		| OPENSSL_INIT_LOAD_CONFIG, NULL);
 #else
-    ADD_TEST(test_engines);
-    ADD_TEST(test_redirect);
+	OpenSSL_add_all_algorithms();
+	OpenSSL_add_all_digests();
+	ERR_load_crypto_strings();
 #endif
-    return 1;
+	ERR_clear_error();
+
+
+	if((engine=ENGINE_by_id("skf")) != NULL){
+		name = (char *)ENGINE_get_name(engine);
+		printf("engine name :%s \n",name);
+		
+	}
+	else{
+		printf("ENGINE_by_id error!\n");
+		return 0;
+	}
+
+	if (!ENGINE_init(engine)) {
+		printf("Could not initialize engine\n");
+		display_openssl_errors(__LINE__);
+		ret = 1;
+		goto end;
+	}
+	ENGINE_load_builtin_engines();
+
+	
+	if (!ENGINE_ctrl_cmd_string(engine, "OPEN_DEVICE", "ES3000GM VCR 1", 0)) {
+		display_openssl_errors(__LINE__);
+		goto end;
+	}
+	/*
+	if (!ENGINE_ctrl_cmd_string(engine, "DEV_AUTH", "7kfcTgCLeYTwwLly", 0)) {
+		display_openssl_errors(__LINE__);
+		goto end;
+	}
+	*/
+
+	if (!ENGINE_ctrl_cmd_string(engine, "OPEN_APP", "KOAL_ECC_APP", 0)) {
+		display_openssl_errors(__LINE__);
+		goto end;
+	}
+	
+	if (!ENGINE_ctrl_cmd_string(engine, "VERIFY_PIN", "123456", 0)) {
+		display_openssl_errors(__LINE__);
+		goto end;
+	}
+
+	if (!ENGINE_ctrl_cmd_string(engine, "OPEN_CONTAINER", "KOAL_ECC", 0)) {
+		display_openssl_errors(__LINE__);
+		goto end;
+	}
+
+	memset(buf,0x00,sizeof(buf));
+	num = 16;
+	if(!RAND_bytes((unsigned char *)buf,num)){
+		printf("skf rand_bytes error\n");
+		goto end;
+	}
+	printHex(buf,num);
+
+	len = sizeof(digest);
+	memset(digest,"0x31",sizeof(digest));
+
+	digest_algo = EVP_get_digestbyname("sm3");
+	ctx = EVP_MD_CTX_create();
+	if(ctx == NULL)
+		printf("EVP_MD_CTX_new error\n");
+	if (EVP_DigestInit(ctx, digest_algo) <= 0) {
+		printf("EVP_DigestInit error\n");
+	}
+
+	EVP_DigestInit_ex(ctx, digest_algo,engine);
+	EVP_DigestUpdate(ctx, msg1, strlen(msg1));
+	len = EVP_MAX_MD_SIZE;
+        EVP_DigestFinal_ex(ctx, digest, &len);
+	printf("Digest:\n");
+	printHex(digest,len);
+
+	//begin sign
+	if (!(ec_key = EC_KEY_new_method(engine))) {
+		goto end;
+	}
+
+	unsigned char signature[256] = {0};
+	unsigned int  ulSigLen = 256;
+	ECDSA_SIG *sm2sinblob = ec_key->meth->sign_sig(digest,len,NULL,NULL,NULL);
+
+	unsigned char key[] = "\x5F\x4D\xCC\x3B\x5A\xA7\x65\xD6\x1D\x83\x27\xDE\xB8\x82\xCF\x99";
+	unsigned char iv[]  = "\x2B\x95\x99\x0A\x91\x51\x37\x4A\xBD\x8F\xF8\xC5\xA7\xA0\xFE\x08";
+	unsigned char ciphertext[48+16] = {0};
+	unsigned char plaintext[48] = {0};
+
+	memset(plaintext,0x31,sizeof(plaintext));
+
+	int cipher_len = 0;
+	int plaintext_len = 0;
+
+	//begin cipher.
+	EVP_CIPHER_CTX* evp_cipher_ctx = EVP_CIPHER_CTX_new();
+	//const EVP_CIPHER *evp_cipher = EVP_sms4_cbc();
+	const EVP_CIPHER *evp_cipher = ENGINE_get_cipher(engine,NID_sm1_ecb);
+
+	EVP_CipherInit_ex(evp_cipher_ctx,evp_cipher,engine,key,iv,1);
+	cipher_len = EVP_Cipher(evp_cipher_ctx,ciphertext,plaintext,sizeof(plaintext));
+	printf("EVP_Cipher encrypt:\n");
+	printHex(ciphertext,cipher_len);
+
+	memset(plaintext,0x00,sizeof(plaintext));
+	EVP_CipherInit_ex(evp_cipher_ctx,evp_cipher,engine,key,iv,0);
+	plaintext_len = EVP_Cipher(evp_cipher_ctx,plaintext,ciphertext,cipher_len);
+	printf("EVP_Cipher dncrypt:\n");
+	printHex(plaintext,plaintext_len);
+
+
+	unsigned char tmp_buf[55];
+	unsigned char tmp_buf2[64];
+	unsigned char epms[48 + 16];
+	int padl = 0;
+       	int outl = sizeof(epms);
+
+	memset(tmp_buf,0x31,sizeof(tmp_buf));
+
+	EVP_EncryptInit_ex(evp_cipher_ctx, evp_cipher, engine, key,iv);
+	EVP_EncryptUpdate(evp_cipher_ctx, epms, &outl, tmp_buf,sizeof(tmp_buf));
+	EVP_EncryptFinal_ex(evp_cipher_ctx, &(epms[outl]), &padl);
+	printf("outl=%d,padl=%d\n",outl,padl);
+	outl += padl;
+
+	printf("EVP_update encrypt:\n");
+	printHex(epms,outl);
+
+	memset(tmp_buf2,0x00,sizeof(tmp_buf2));
+	padl = 0;
+
+	EVP_DecryptInit_ex(evp_cipher_ctx, evp_cipher, engine, key,iv);
+	EVP_DecryptUpdate(evp_cipher_ctx, tmp_buf2, &outl,epms,sizeof(epms));
+	EVP_DecryptFinal_ex(evp_cipher_ctx, &(tmp_buf2[outl]), &padl);
+	outl += padl;
+	printf("DEC outl=%d,padl=%d\n",outl,padl);
+
+	printf("EVP_update decrypt:\n");
+	printHex(tmp_buf2,outl);
+
+
+	//end cipher.
+
+	/*
+	pkey_ctx = EVP_PKEY_CTX_new(NULL, engine);
+	if (pkey_ctx == NULL) {
+		fprintf(stderr, "Could not create context\n");
+		goto end;
+	}
+
+	if (EVP_PKEY_sign_init(pkey_ctx) <= 0) {
+	fprintf(stderr, "Could not init signature\n");
+	display_openssl_errors(__LINE__);
+	exit(1);
+	}
+
+	if (EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING) <= 0) {
+	fprintf(stderr, "Could not set padding\n");
+	display_openssl_errors(__LINE__);
+	exit(1);
+	}
+
+	if (EVP_PKEY_CTX_set_signature_md(pkey_ctx, digest_algo) <= 0) {
+	fprintf(stderr, "Could not set message digest algorithm\n");
+	display_openssl_errors(__LINE__);
+	exit(1);
+	}
+
+	sig_len = sizeof(sig);
+	if (EVP_PKEY_sign(pkey_ctx, sig, &sig_len, md,
+	EVP_MD_size(digest_algo)) <= 0) {
+	display_openssl_errors(__LINE__);
+	exit(1);
+	}
+	EVP_PKEY_CTX_free(pkey_ctx);
+	*/
+
+end:
+	EVP_MD_CTX_free(ctx);
+	ENGINE_finish(engine);
+	return 0;
 }

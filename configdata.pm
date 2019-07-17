@@ -14,12 +14,12 @@ our %config = (
   AR => "ar",
   ARFLAGS => [ "r" ],
   CC => "gcc",
-  CFLAGS => [ "-Wall -O3" ],
+  CFLAGS => [ "-Wall -O0 -g", "-fPIC" ],
   CPPDEFINES => [  ],
   CPPFLAGS => [  ],
   CPPINCLUDES => [  ],
   CXX => "g++",
-  CXXFLAGS => [ "-Wall -O3" ],
+  CXXFLAGS => [ "-Wall -O0 -g", "-fPIC" ],
   HASHBANGPERL => "/usr/bin/env perl",
   LDFLAGS => [  ],
   LDLIBS => [  ],
@@ -33,17 +33,17 @@ our %config = (
   bn_ll => "0",
   build_file => "Makefile",
   build_file_templates => [ "Configurations/common0.tmpl", "Configurations/unix-Makefile.tmpl", "Configurations/common.tmpl" ],
-  build_infos => [ "./build.info", "crypto/build.info", "ssl/build.info", "engines/build.info", "apps/build.info", "test/build.info", "util/build.info", "tools/build.info", "fuzz/build.info", "crypto/objects/build.info", "crypto/md4/build.info", "crypto/md5/build.info", "crypto/sha/build.info", "crypto/mdc2/build.info", "crypto/hmac/build.info", "crypto/ripemd/build.info", "crypto/whrlpool/build.info", "crypto/poly1305/build.info", "crypto/blake2/build.info", "crypto/siphash/build.info", "crypto/sm3/build.info", "crypto/des/build.info", "crypto/aes/build.info", "crypto/rc2/build.info", "crypto/rc4/build.info", "crypto/idea/build.info", "crypto/aria/build.info", "crypto/bf/build.info", "crypto/cast/build.info", "crypto/camellia/build.info", "crypto/seed/build.info", "crypto/sm4/build.info", "crypto/chacha/build.info", "crypto/modes/build.info", "crypto/bn/build.info", "crypto/ec/build.info", "crypto/rsa/build.info", "crypto/dsa/build.info", "crypto/dh/build.info", "crypto/sm2/build.info", "crypto/dso/build.info", "crypto/engine/build.info", "crypto/buffer/build.info", "crypto/bio/build.info", "crypto/stack/build.info", "crypto/lhash/build.info", "crypto/rand/build.info", "crypto/err/build.info", "crypto/evp/build.info", "crypto/asn1/build.info", "crypto/pem/build.info", "crypto/x509/build.info", "crypto/x509v3/build.info", "crypto/conf/build.info", "crypto/txt_db/build.info", "crypto/pkcs7/build.info", "crypto/pkcs12/build.info", "crypto/comp/build.info", "crypto/ocsp/build.info", "crypto/ui/build.info", "crypto/cms/build.info", "crypto/ts/build.info", "crypto/srp/build.info", "crypto/cmac/build.info", "crypto/ct/build.info", "crypto/async/build.info", "crypto/kdf/build.info", "crypto/store/build.info", "test/ossl_shim/build.info" ],
-  build_type => "release",
+  build_infos => [ "./build.info", "crypto/build.info", "ssl/build.info", "engines/build.info", "apps/build.info", "test/build.info", "util/build.info", "tools/build.info", "fuzz/build.info", "crypto/objects/build.info", "crypto/md4/build.info", "crypto/md5/build.info", "crypto/sha/build.info", "crypto/mdc2/build.info", "crypto/hmac/build.info", "crypto/ripemd/build.info", "crypto/whrlpool/build.info", "crypto/poly1305/build.info", "crypto/blake2/build.info", "crypto/siphash/build.info", "crypto/sm3/build.info", "crypto/des/build.info", "crypto/aes/build.info", "crypto/rc2/build.info", "crypto/rc4/build.info", "crypto/idea/build.info", "crypto/aria/build.info", "crypto/bf/build.info", "crypto/cast/build.info", "crypto/camellia/build.info", "crypto/seed/build.info", "crypto/sm4/build.info", "crypto/chacha/build.info", "crypto/modes/build.info", "crypto/bn/build.info", "crypto/ec/build.info", "crypto/rsa/build.info", "crypto/dsa/build.info", "crypto/dh/build.info", "crypto/sm2/build.info", "crypto/dso/build.info", "crypto/engine/build.info", "crypto/buffer/build.info", "crypto/bio/build.info", "crypto/stack/build.info", "crypto/lhash/build.info", "crypto/rand/build.info", "crypto/err/build.info", "crypto/evp/build.info", "crypto/asn1/build.info", "crypto/pem/build.info", "crypto/x509/build.info", "crypto/x509v3/build.info", "crypto/conf/build.info", "crypto/txt_db/build.info", "crypto/pkcs7/build.info", "crypto/pkcs12/build.info", "crypto/comp/build.info", "crypto/ocsp/build.info", "crypto/ui/build.info", "crypto/cms/build.info", "crypto/ts/build.info", "crypto/srp/build.info", "crypto/cmac/build.info", "crypto/ct/build.info", "crypto/async/build.info", "crypto/kdf/build.info", "crypto/store/build.info", "crypto/skf/build.info", "test/ossl_shim/build.info" ],
+  build_type => "debug",
   builddir => ".",
   cflags => [ "-Wa,--noexecstack" ],
   conf_files => [ "Configurations/00-base-templates.conf", "Configurations/10-main.conf", "Configurations/shared-info.pl" ],
   cppflags => [  ],
   cxxflags => [  ],
-  defines => [ "NDEBUG" ],
+  defines => [  ],
   dirs => [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "fuzz" ],
   dynamic_engines => "1",
-  engdirs => [  ],
+  engdirs => [ "afalg" ],
   ex_libs => [  ],
   export_var_as_fn => "0",
   includes => [  ],
@@ -55,42 +55,26 @@ our %config = (
   minor => "1.1",
   openssl_algorithm_defines => [ "OPENSSL_NO_MD2", "OPENSSL_NO_RC5" ],
   openssl_api_defines => [  ],
-  openssl_other_defines => [ "OPENSSL_RAND_SEED_OS", "OPENSSL_NO_ASAN", "OPENSSL_NO_CRYPTO_MDEBUG", "OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE", "OPENSSL_NO_DEVCRYPTOENG", "OPENSSL_NO_EC_NISTP_64_GCC_128", "OPENSSL_NO_EGD", "OPENSSL_NO_EXTERNAL_TESTS", "OPENSSL_NO_FUZZ_AFL", "OPENSSL_NO_FUZZ_LIBFUZZER", "OPENSSL_NO_HEARTBEATS", "OPENSSL_NO_MSAN", "OPENSSL_NO_SCTP", "OPENSSL_NO_SSL_TRACE", "OPENSSL_NO_SSL3", "OPENSSL_NO_SSL3_METHOD", "OPENSSL_NO_UBSAN", "OPENSSL_NO_UNIT_TEST", "OPENSSL_NO_WEAK_SSL_CIPHERS", "OPENSSL_NO_STATIC_ENGINE", "OPENSSL_NO_AFALGENG" ],
+  openssl_other_defines => [ "OPENSSL_RAND_SEED_OS", "OPENSSL_NO_ASAN", "OPENSSL_NO_CRYPTO_MDEBUG", "OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE", "OPENSSL_NO_DEVCRYPTOENG", "OPENSSL_NO_EC_NISTP_64_GCC_128", "OPENSSL_NO_EGD", "OPENSSL_NO_EXTERNAL_TESTS", "OPENSSL_NO_FUZZ_AFL", "OPENSSL_NO_FUZZ_LIBFUZZER", "OPENSSL_NO_HEARTBEATS", "OPENSSL_NO_MSAN", "OPENSSL_NO_SCTP", "OPENSSL_NO_SSL_TRACE", "OPENSSL_NO_SSL3", "OPENSSL_NO_SSL3_METHOD", "OPENSSL_NO_UBSAN", "OPENSSL_NO_UNIT_TEST", "OPENSSL_NO_WEAK_SSL_CIPHERS", "OPENSSL_NO_STATIC_ENGINE" ],
   openssl_sys_defines => [  ],
   openssl_thread_defines => [ "OPENSSL_THREADS" ],
   openssldir => "",
-  options => "--prefix=/root/tassl-1.1.1_lib no-asan no-crypto-mdebug no-crypto-mdebug-backtrace no-devcryptoeng no-ec_nistp_64_gcc_128 no-egd no-external-tests no-fuzz-afl no-fuzz-libfuzzer no-heartbeats no-md2 no-msan no-rc5 no-sctp no-ssl-trace no-ssl3 no-ssl3-method no-ubsan no-unit-test no-weak-ssl-ciphers no-zlib no-zlib-dynamic",
-  perl_archname => "x86_64-linux-thread-multi",
+  options => "--prefix=/home/tassl1/thirdparty/TASSL-master-install enable-skfeng enable-shared -fPIC --debug no-asan no-crypto-mdebug no-crypto-mdebug-backtrace no-devcryptoeng no-ec_nistp_64_gcc_128 no-egd no-external-tests no-fuzz-afl no-fuzz-libfuzzer no-heartbeats no-md2 no-msan no-rc5 no-sctp no-ssl-trace no-ssl3 no-ssl3-method no-ubsan no-unit-test no-weak-ssl-ciphers no-zlib no-zlib-dynamic",
+  perl_archname => "x86_64-linux-gnu-thread-multi",
   perl_cmd => "/usr/bin/perl",
-  perl_version => "5.10.1",
-  perlargv => [ "linux-x86_64", "--prefix=/root/tassl-1.1.1_lib" ],
+  perl_version => "5.26.1",
+  perlargv => [ "linux-x86_64", "--prefix=/home/tassl1/thirdparty/TASSL-master-install", "enable-skfeng", "-shared", "-fPIC", "--debug" ],
   perlenv => {
       "AR" => undef,
-      "ARFLAGS" => undef,
-      "AS" => undef,
-      "ASFLAGS" => undef,
       "BUILDFILE" => undef,
       "CC" => undef,
-      "CFLAGS" => undef,
-      "CPP" => undef,
-      "CPPDEFINES" => undef,
-      "CPPFLAGS" => undef,
-      "CPPINCLUDES" => undef,
       "CROSS_COMPILE" => undef,
       "CXX" => undef,
-      "CXXFLAGS" => undef,
       "HASHBANGPERL" => undef,
-      "LD" => undef,
-      "LDFLAGS" => undef,
-      "LDLIBS" => undef,
-      "MT" => undef,
-      "MTFLAGS" => undef,
       "OPENSSL_LOCAL_CONFIG_DIR" => undef,
       "PERL" => undef,
       "RANLIB" => undef,
       "RC" => undef,
-      "RCFLAGS" => undef,
-      "RM" => undef,
       "WINDRES" => undef,
       "__CNF_CFLAGS" => "",
       "__CNF_CPPDEFINES" => "",
@@ -100,10 +84,10 @@ our %config = (
       "__CNF_LDFLAGS" => "",
       "__CNF_LDLIBS" => "",
   },
-  prefix => "/root/tassl-1.1.1_lib",
+  prefix => "/home/tassl1/thirdparty/TASSL-master-install",
   processor => "",
   rc4_int => "unsigned int",
-  sdirs => [ "objects", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2", "siphash", "sm3", "des", "aes", "rc2", "rc4", "idea", "aria", "bf", "cast", "camellia", "seed", "sm4", "chacha", "modes", "bn", "ec", "rsa", "dsa", "dh", "sm2", "dso", "engine", "buffer", "bio", "stack", "lhash", "rand", "err", "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui", "cms", "ts", "srp", "cmac", "ct", "async", "kdf", "store" ],
+  sdirs => [ "objects", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2", "siphash", "sm3", "des", "aes", "rc2", "rc4", "idea", "aria", "bf", "cast", "camellia", "seed", "sm4", "chacha", "modes", "bn", "ec", "rsa", "dsa", "dh", "sm2", "dso", "engine", "buffer", "bio", "stack", "lhash", "rand", "err", "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui", "cms", "ts", "srp", "cmac", "ct", "async", "kdf", "store", "skf" ],
   shlib_major => "1",
   shlib_minor => "1",
   shlib_version_history => "",
@@ -119,9 +103,9 @@ our %target = (
   AR => "ar",
   ARFLAGS => "r",
   CC => "gcc",
-  CFLAGS => "-Wall -O3",
+  CFLAGS => "-Wall -O0 -g",
   CXX => "g++",
-  CXXFLAGS => "-Wall -O3",
+  CXXFLAGS => "-Wall -O0 -g",
   HASHBANGPERL => "/usr/bin/env perl",
   RANLIB => "ranlib",
   RC => "windres",
@@ -305,6 +289,8 @@ our @disablables = (
   "weak-ssl-ciphers",
   "zlib",
   "zlib-dynamic",
+  "skfeng",
+  "skf",
   "ssl3",
   "ssl3-method",
   "tls1",
@@ -321,7 +307,6 @@ our @disablables = (
 );
 
 our %disabled = (
-  "afalgeng" => "too-old-kernel",
   "asan" => "default",
   "crypto-mdebug" => "default",
   "crypto-mdebug-backtrace" => "default",
@@ -659,6 +644,10 @@ our %unified_info = (
                 [
                     "crypto/perlasm/x86asm.pl",
                 ],
+            "engines/afalg" =>
+                [
+                    "libcrypto",
+                ],
             "engines/capi" =>
                 [
                     "libcrypto",
@@ -672,6 +661,10 @@ our %unified_info = (
                     "libcrypto",
                 ],
             "engines/padlock" =>
+                [
+                    "libcrypto",
+                ],
+            "engines/skf" =>
                 [
                     "libcrypto",
                 ],
@@ -958,6 +951,16 @@ our %unified_info = (
                     "libcrypto",
                     "libssl",
                 ],
+            "test/buildtest_gmapi" =>
+                [
+                    "libcrypto",
+                    "libssl",
+                ],
+            "test/buildtest_gmskf" =>
+                [
+                    "libcrypto",
+                    "libssl",
+                ],
             "test/buildtest_hmac" =>
                 [
                     "libcrypto",
@@ -1083,7 +1086,27 @@ our %unified_info = (
                     "libcrypto",
                     "libssl",
                 ],
+            "test/buildtest_sgd" =>
+                [
+                    "libcrypto",
+                    "libssl",
+                ],
             "test/buildtest_sha" =>
+                [
+                    "libcrypto",
+                    "libssl",
+                ],
+            "test/buildtest_skf" =>
+                [
+                    "libcrypto",
+                    "libssl",
+                ],
+            "test/buildtest_sm2" =>
+                [
+                    "libcrypto",
+                    "libssl",
+                ],
+            "test/buildtest_sm3" =>
                 [
                     "libcrypto",
                     "libssl",
@@ -2903,6 +2926,24 @@ our %unified_info = (
                                 ],
                         },
                 },
+            "crypto/skf" =>
+                {
+                    "deps" =>
+                        [
+                            "crypto/skf/skf_err.o",
+                            "crypto/skf/skf_lib.o",
+                            "crypto/skf/skf_meth.o",
+                            "crypto/skf/skf_prn.o",
+                            "crypto/skf/skf_wisec.o",
+                        ],
+                    "products" =>
+                        {
+                            "lib" =>
+                                [
+                                    "libcrypto",
+                                ],
+                        },
+                },
             "crypto/sm2" =>
                 {
                     "deps" =>
@@ -3173,10 +3214,12 @@ our %unified_info = (
                         {
                             "dso" =>
                                 [
+                                    "engines/afalg",
                                     "engines/capi",
                                     "engines/dasync",
                                     "engines/ossltest",
                                     "engines/padlock",
+                                    "engines/skf",
                                 ],
                         },
                 },
@@ -3336,10 +3379,12 @@ our %unified_info = (
         },
     "engines" =>
         [
+            "engines/afalg",
             "engines/capi",
             "engines/dasync",
             "engines/ossltest",
             "engines/padlock",
+            "engines/skf",
         ],
     "extra" =>
         [
@@ -4395,6 +4440,16 @@ our %unified_info = (
                     "test/generate_buildtest.pl",
                     "evp",
                 ],
+            "test/buildtest_gmapi.c" =>
+                [
+                    "test/generate_buildtest.pl",
+                    "gmapi",
+                ],
+            "test/buildtest_gmskf.c" =>
+                [
+                    "test/generate_buildtest.pl",
+                    "gmskf",
+                ],
             "test/buildtest_hmac.c" =>
                 [
                     "test/generate_buildtest.pl",
@@ -4520,10 +4575,30 @@ our %unified_info = (
                     "test/generate_buildtest.pl",
                     "seed",
                 ],
+            "test/buildtest_sgd.c" =>
+                [
+                    "test/generate_buildtest.pl",
+                    "sgd",
+                ],
             "test/buildtest_sha.c" =>
                 [
                     "test/generate_buildtest.pl",
                     "sha",
+                ],
+            "test/buildtest_skf.c" =>
+                [
+                    "test/generate_buildtest.pl",
+                    "skf",
+                ],
+            "test/buildtest_sm2.c" =>
+                [
+                    "test/generate_buildtest.pl",
+                    "sm2",
+                ],
+            "test/buildtest_sm3.c" =>
+                [
+                    "test/generate_buildtest.pl",
+                    "sm3",
                 ],
             "test/buildtest_srp.c" =>
                 [
@@ -8443,6 +8518,36 @@ our %unified_info = (
                     "crypto/include",
                     "include",
                 ],
+            "crypto/skf/skf_err.o" =>
+                [
+                    ".",
+                    "crypto/include",
+                    "include",
+                ],
+            "crypto/skf/skf_lib.o" =>
+                [
+                    ".",
+                    "crypto/include",
+                    "include",
+                ],
+            "crypto/skf/skf_meth.o" =>
+                [
+                    ".",
+                    "crypto/include",
+                    "include",
+                ],
+            "crypto/skf/skf_prn.o" =>
+                [
+                    ".",
+                    "crypto/include",
+                    "include",
+                ],
+            "crypto/skf/skf_wisec.o" =>
+                [
+                    ".",
+                    "crypto/include",
+                    "include",
+                ],
             "crypto/sm2/sm2_crypt.o" =>
                 [
                     ".",
@@ -9121,6 +9226,10 @@ our %unified_info = (
                     "crypto/include",
                     "include",
                 ],
+            "engines/e_afalg.o" =>
+                [
+                    "include",
+                ],
             "engines/e_capi.o" =>
                 [
                     "include",
@@ -9138,6 +9247,10 @@ our %unified_info = (
                     "include",
                 ],
             "engines/e_padlock.o" =>
+                [
+                    "include",
+                ],
+            "engines/e_skf.o" =>
                 [
                     "include",
                 ],
@@ -9591,6 +9704,14 @@ our %unified_info = (
                 [
                     "include",
                 ],
+            "test/buildtest_gmapi.o" =>
+                [
+                    "include",
+                ],
+            "test/buildtest_gmskf.o" =>
+                [
+                    "include",
+                ],
             "test/buildtest_hmac.o" =>
                 [
                     "include",
@@ -9691,7 +9812,23 @@ our %unified_info = (
                 [
                     "include",
                 ],
+            "test/buildtest_sgd.o" =>
+                [
+                    "include",
+                ],
             "test/buildtest_sha.o" =>
+                [
+                    "include",
+                ],
+            "test/buildtest_skf.o" =>
+                [
+                    "include",
+                ],
+            "test/buildtest_sm2.o" =>
+                [
+                    "include",
+                ],
+            "test/buildtest_sm3.o" =>
                 [
                     "include",
                 ],
@@ -10235,8 +10372,10 @@ our %unified_info = (
         {
             "engines" =>
                 [
+                    "engines/afalg",
                     "engines/capi",
                     "engines/padlock",
+                    "engines/skf",
                 ],
             "libraries" =>
                 [
@@ -10325,6 +10464,8 @@ our %unified_info = (
             "test/buildtest_ecdsa",
             "test/buildtest_engine",
             "test/buildtest_evp",
+            "test/buildtest_gmapi",
+            "test/buildtest_gmskf",
             "test/buildtest_hmac",
             "test/buildtest_idea",
             "test/buildtest_kdf",
@@ -10350,7 +10491,11 @@ our %unified_info = (
             "test/buildtest_rsa",
             "test/buildtest_safestack",
             "test/buildtest_seed",
+            "test/buildtest_sgd",
             "test/buildtest_sha",
+            "test/buildtest_skf",
+            "test/buildtest_sm2",
+            "test/buildtest_sm3",
             "test/buildtest_srp",
             "test/buildtest_srtp",
             "test/buildtest_ssl",
@@ -12987,6 +13132,26 @@ our %unified_info = (
                 [
                     "crypto/siphash/siphash_pmeth.c",
                 ],
+            "crypto/skf/skf_err.o" =>
+                [
+                    "crypto/skf/skf_err.c",
+                ],
+            "crypto/skf/skf_lib.o" =>
+                [
+                    "crypto/skf/skf_lib.c",
+                ],
+            "crypto/skf/skf_meth.o" =>
+                [
+                    "crypto/skf/skf_meth.c",
+                ],
+            "crypto/skf/skf_prn.o" =>
+                [
+                    "crypto/skf/skf_prn.c",
+                ],
+            "crypto/skf/skf_wisec.o" =>
+                [
+                    "crypto/skf/skf_wisec.c",
+                ],
             "crypto/sm2/sm2_crypt.o" =>
                 [
                     "crypto/sm2/sm2_crypt.c",
@@ -13439,6 +13604,10 @@ our %unified_info = (
                 [
                     "crypto/x86_64cpuid.s",
                 ],
+            "engines/afalg" =>
+                [
+                    "engines/e_afalg.o",
+                ],
             "engines/capi" =>
                 [
                     "engines/e_capi.o",
@@ -13446,6 +13615,10 @@ our %unified_info = (
             "engines/dasync" =>
                 [
                     "engines/e_dasync.o",
+                ],
+            "engines/e_afalg.o" =>
+                [
+                    "engines/e_afalg.c",
                 ],
             "engines/e_capi.o" =>
                 [
@@ -13467,6 +13640,10 @@ our %unified_info = (
                 [
                     "engines/e_padlock.c",
                 ],
+            "engines/e_skf.o" =>
+                [
+                    "engines/e_skf.c",
+                ],
             "engines/ossltest" =>
                 [
                     "engines/e_ossltest.o",
@@ -13475,6 +13652,10 @@ our %unified_info = (
                 [
                     "engines/e_padlock-x86_64.o",
                     "engines/e_padlock.o",
+                ],
+            "engines/skf" =>
+                [
+                    "engines/e_skf.o",
                 ],
             "fuzz/asn1-test" =>
                 [
@@ -14127,6 +14308,11 @@ our %unified_info = (
                     "crypto/siphash/siphash.o",
                     "crypto/siphash/siphash_ameth.o",
                     "crypto/siphash/siphash_pmeth.o",
+                    "crypto/skf/skf_err.o",
+                    "crypto/skf/skf_lib.o",
+                    "crypto/skf/skf_meth.o",
+                    "crypto/skf/skf_prn.o",
+                    "crypto/skf/skf_wisec.o",
                     "crypto/sm2/sm2_crypt.o",
                     "crypto/sm2/sm2_err.o",
                     "crypto/sm2/sm2_pmeth.o",
@@ -14817,6 +15003,22 @@ our %unified_info = (
                 [
                     "test/buildtest_evp.c",
                 ],
+            "test/buildtest_gmapi" =>
+                [
+                    "test/buildtest_gmapi.o",
+                ],
+            "test/buildtest_gmapi.o" =>
+                [
+                    "test/buildtest_gmapi.c",
+                ],
+            "test/buildtest_gmskf" =>
+                [
+                    "test/buildtest_gmskf.o",
+                ],
+            "test/buildtest_gmskf.o" =>
+                [
+                    "test/buildtest_gmskf.c",
+                ],
             "test/buildtest_hmac" =>
                 [
                     "test/buildtest_hmac.o",
@@ -15017,6 +15219,14 @@ our %unified_info = (
                 [
                     "test/buildtest_seed.c",
                 ],
+            "test/buildtest_sgd" =>
+                [
+                    "test/buildtest_sgd.o",
+                ],
+            "test/buildtest_sgd.o" =>
+                [
+                    "test/buildtest_sgd.c",
+                ],
             "test/buildtest_sha" =>
                 [
                     "test/buildtest_sha.o",
@@ -15024,6 +15234,30 @@ our %unified_info = (
             "test/buildtest_sha.o" =>
                 [
                     "test/buildtest_sha.c",
+                ],
+            "test/buildtest_skf" =>
+                [
+                    "test/buildtest_skf.o",
+                ],
+            "test/buildtest_skf.o" =>
+                [
+                    "test/buildtest_skf.c",
+                ],
+            "test/buildtest_sm2" =>
+                [
+                    "test/buildtest_sm2.o",
+                ],
+            "test/buildtest_sm2.o" =>
+                [
+                    "test/buildtest_sm2.c",
+                ],
+            "test/buildtest_sm3" =>
+                [
+                    "test/buildtest_sm3.o",
+                ],
+            "test/buildtest_sm3.o" =>
+                [
+                    "test/buildtest_sm3.c",
                 ],
             "test/buildtest_srp" =>
                 [
