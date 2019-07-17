@@ -146,6 +146,9 @@ my @known_algorithms = ( # These are algorithms we know are guarded in relevant
 			 "DEPRECATEDIN_1_0_0",
 			 "DEPRECATEDIN_1_1_0",
 			 "DEPRECATEDIN_1_2_0",
+			 "SM3", "SMS4", "FFX", "SM2", "PAILLIER", "CPK", "OTP", "GMAPI","CNSM", "EC2",
+			 "BFIBE", "BB1IBE", "SM9", "SAF", "SDF", "SKF", "SOF", "ZUC", "SERPENT", "SPECK", "BASE58",
+			 "GMTLS", "GMTLS_METHOD", "CA", "MACRO", "ASYNC", "ECRS"
                      );
 
 # %disabled comes from configdata.pm
