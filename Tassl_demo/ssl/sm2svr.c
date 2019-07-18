@@ -252,6 +252,21 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+<<<<<<< HEAD
+=======
+	
+	/*add by yangliqiang 20190717,begin*/
+	if((engine=ENGINE_by_id("skf")) != NULL){
+		name = (char *)ENGINE_get_name(engine);
+		printf("engine name :%s \n",name);
+		
+	}
+	else{
+		printf("ENGINE_by_id error!\n");
+		return 0;
+	}
+
+>>>>>>> 530eb4eaf0ad9068a771bc37b176c4246eee755b
 	if (!ENGINE_init(engine)) {
 		printf("Could not initialize engine\n");
 		display_openssl_errors(__LINE__);

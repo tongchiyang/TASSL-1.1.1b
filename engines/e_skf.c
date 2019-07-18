@@ -953,6 +953,7 @@ static int skf_sm3_init(EVP_MD_CTX *ctx) {
 	ULONG    ulPubKeyLen =0;
 	ECCPUBLICKEYBLOB  EccPubKey;
 	unsigned char pucId[32] ={0};
+	ctx->flags = EVP_MD_CTX_FLAG_SKFENG;
 	
 	if((rv = SKF_ExportPublicKey(*gh_container,TRUE,pPubKey,&ulPubKeyLen)) != SAR_OK) {
 		ESKFerr(ESKF_F_SKF_SM3_INIT, ESKF_R_SKF_EXPORT_PUBLIC_KEY_FAILED);
@@ -1026,7 +1027,7 @@ static int skf_sm3_final(EVP_MD_CTX *ctx, unsigned char *md) {
 
 static const EVP_MD skf_sm3 = {
 	NID_sm3,
-	0,
+	NID_sm3WithRSAEncryption,
 	SM3_DIGEST_LENGTH,
 	0,
 	skf_sm3_init,
