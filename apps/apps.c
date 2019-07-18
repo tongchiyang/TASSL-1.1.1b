@@ -1308,6 +1308,36 @@ ENGINE *setup_engine(const char *engine, int debug)
         }
 
         BIO_printf(bio_err, "engine \"%s\" set.\n", ENGINE_get_id(e));
+
+		/*add by yangliqiang for skf engine,begin*/
+		if (!ENGINE_ctrl_cmd_string(e, "OPEN_DEVICE", "ES3000GM VCR 1", 0)) {
+			BIO_printf(bio_err, "can't OPEN_DEVICE ES3000GM VCR 1\n");
+            ERR_print_errors(bio_err);
+			ENGINE_free(e);
+            return NULL;
+		}
+
+		if (!ENGINE_ctrl_cmd_string(e, "OPEN_APP", "KOAL_ECC_APP", 0)) {
+			BIO_printf(bio_err, "can't OPEN_APP KOAL_ECC_APP\n");
+            ERR_print_errors(bio_err);
+			ENGINE_free(e);
+            return NULL;
+		}
+		
+		if (!ENGINE_ctrl_cmd_string(e, "VERIFY_PIN", "123456", 0)) {
+			BIO_printf(bio_err, "VERIFY_PIN error\n");
+            ERR_print_errors(bio_err);
+			ENGINE_free(e);
+            return NULL;
+		}
+
+		if (!ENGINE_ctrl_cmd_string(e, "OPEN_CONTAINER", "KOAL_ECC", 0)) {
+			BIO_printf(bio_err, "can't OPEN_CONTAINER KOAL_ECC\n");
+            ERR_print_errors(bio_err);
+			ENGINE_free(e);
+            return NULL;
+		}
+		/*add by yangliqiang for skf engine,end*/
     }
 #endif
     return e;

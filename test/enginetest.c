@@ -45,8 +45,11 @@ int main() {
 	unsigned char digest[EVP_MAX_MD_SIZE];
 	EC_KEY *ec_key = NULL;
 	size_t len;
-	char msg1[]="Hello Dig1";
+	char msg1[17320];
+	//char msg1[]="Hello Dig1";
 	char msg2[]="Hello Dig2";
+
+	memset(msg1,0x32,sizeof(msg1));
 
 	//EVP_PKEY_CTX *pkey_ctx;
 	/*
@@ -147,7 +150,10 @@ int main() {
 	}
 
 	EVP_DigestInit_ex(ctx, digest_algo,engine);
-	EVP_DigestUpdate(ctx, msg1, strlen(msg1));
+	ret = EVP_DigestUpdate(ctx, msg1, strlen(msg1));
+	ret = EVP_DigestUpdate(ctx, msg1, strlen(msg1));
+	ret = EVP_DigestUpdate(ctx, msg1, strlen(msg1));
+	printf("ret = %x\n");
 	len = EVP_MAX_MD_SIZE;
         EVP_DigestFinal_ex(ctx, digest, &len);
 	printf("Digest:\n");

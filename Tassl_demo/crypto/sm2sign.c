@@ -62,8 +62,8 @@
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <sm/sm2.h>
-#include <sm/sm3.h>
+#include <sm2.h>
+#include <sm3.h>
 
 /*This Demo for SM2 Signature And Verify*/
 /*First: Generate A key, And output it*/

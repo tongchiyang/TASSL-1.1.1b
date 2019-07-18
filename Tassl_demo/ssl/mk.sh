@@ -1,7 +1,7 @@
 #/bin/bash
 PROGRAMES="sm2svr sm2cli"
-INC_DIR=/root/tassl-1.1.1_lib/include
-LIB_DIR=/root/tassl-1.1.1_lib/lib
+INC_DIR=$HOME/thirdparty/TASSL-master-install/include
+LIB_DIR=$HOME/thirdparty/TASSL-master-install/lib
 
 if [ $1"X" == "cleanX" ]; then
 printf "cleaning the programe %s.....\n" $PROGRAMES

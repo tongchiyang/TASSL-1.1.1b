@@ -29,6 +29,7 @@
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
 #include "openssl/err.h"
+#include "openssl/engine.h"
 
 #define MAX_BUF_LEN 4096
 #define SM2_SERVER_CERT     "../cert/certs/SS.pem"
@@ -44,10 +45,50 @@
 #define ON   1
 #define OFF  0
 
+# define B_FORMAT_TEXT   0x8000
+# define FORMAT_UNDEF    0
+# define FORMAT_TEXT    (1 | B_FORMAT_TEXT)     /* Generic text */
+# define FORMAT_BINARY   2                      /* Generic binary */
+# define FORMAT_BASE64  (3 | B_FORMAT_TEXT)     /* Base64 */
+# define FORMAT_ASN1     4                      /* ASN.1/DER */
+# define FORMAT_PEM     (5 | B_FORMAT_TEXT)
+# define FORMAT_PKCS12   6
+# define FORMAT_SMIME   (7 | B_FORMAT_TEXT)
+# define FORMAT_ENGINE   8                      /* Not really a file format */
+# define FORMAT_PEMRSA  (9 | B_FORMAT_TEXT)     /* PEM RSAPubicKey format */
+# define FORMAT_ASN1RSA  10                     /* DER RSAPubicKey format */
+# define FORMAT_MSBLOB   11                     /* MS Key blob format */
+# define FORMAT_PVK      12                     /* MS PVK file format */
+# define FORMAT_HTTP     13                     /* Download using HTTP */
+# define FORMAT_NSS      14                     /* NSS keylog format */
+
 #define RETURN_NULL(x) if ((x)==NULL) exit(1)
 #define RETURN_ERR(err,s) if ((err)==-1) { perror(s); exit(1); }
 #define RETURN_SSL(err) if ((err)==-1) { ERR_print_errors_fp(stderr); exit(1); }
 int opt = 1;
+
+static UI_METHOD *ui_method = NULL;
+static const UI_METHOD *ui_fallback_method = NULL;
+
+BIO *bio_in = NULL;
+BIO *bio_out = NULL;
+BIO *bio_err = NULL;
+
+static void display_openssl_errors(int l) {
+	const char *file;
+	char buf[120];
+	int e, line;
+
+	if (ERR_peek_error() == 0)
+		return;
+
+	fprintf(stderr, "At main.c:%d:\n", l);
+
+	while ((e = ERR_get_error_line(&file, &line))) {
+		ERR_error_string(e, buf);
+		fprintf(stderr, "- SSL %s: %s:%d\n", buf, file, line);
+	}
+}
 
 void ShowCerts(SSL * ssl)
 {
@@ -78,9 +119,69 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
 	return (ok);
 }
 
+#ifndef OPENSSL_NO_ENGINE
+/* Try to load an engine in a shareable library */
+static ENGINE *try_load_engine(const char *engine)
+{
+	ENGINE *e = ENGINE_by_id("dynamic");
+	if (e) {
+		if (!ENGINE_ctrl_cmd_string(e, "SO_PATH", engine, 0)
+			|| !ENGINE_ctrl_cmd_string(e, "LOAD", NULL, 0)) {
+			ENGINE_free(e);
+			e = NULL;
+		}
+	}
+	return e;
+}
+#endif
+
+ENGINE *setup_engine(const char *engine, int debug)
+{
+    ENGINE *e = NULL;
+	char* name;
+#ifndef OPENSSL_NO_ENGINE
+    if (engine != NULL) {
+        if (strcmp(engine, "auto") == 0) {
+            fprintf(stderr, "enabling auto ENGINE support\n");
+            ENGINE_register_all_complete();
+            return NULL;
+        }
+        if ((e = ENGINE_by_id(engine)) == NULL
+            && (e = try_load_engine(engine)) == NULL) {
+            fprintf(stderr, "invalid engine \"%s\"\n", engine);
+            return NULL;
+        }
+        if (debug) {
+            ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM, 0, bio_err, 0);
+        }
+        ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, ui_method, 0, 1);
+        if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
+            fprintf(stderr, "can't use that engine\n");
+            ENGINE_free(e);
+            return NULL;
+        }
+		name = (char *)ENGINE_get_name(engine);
+		printf("engine name :%s \n",name);
+        fprintf(stderr, "engine \"%s\" set.\n", ENGINE_get_id(e));
+    }
+#endif
+    return e;
+}
+
+void release_engine(ENGINE *e)
+{
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        /* Free our "structural" reference. */
+        ENGINE_free(e);
+#endif
+}
+
+
 
 int main(int argc, char **argv)
 {
+	int   ret = 0;
 	int     err;
 	int     verify_client = OFF; /* To verify a client certificate, set ON */
 
@@ -95,7 +196,9 @@ int main(int argc, char **argv)
 	SSL_CTX         *ctx = NULL;
 	SSL             *ssl = NULL;
 	const SSL_METHOD      *meth;
-
+	ENGINE	*engine;
+	char* name;
+	
 	short int       s_port = 4433;
 
 	int hsm_tag = 0;
@@ -127,7 +230,68 @@ int main(int argc, char **argv)
 	}
 
 	printf("Service With HSM=%s AIO=%s Port=%d\n", (hsm_tag ? "YES" : "NO"), (aio_tag ? "YES" : "NO"), s_port);
+#if OPENSSL_VERSION_NUMBER>=0x10100000
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
+		| OPENSSL_INIT_ADD_ALL_DIGESTS \
+		| OPENSSL_INIT_LOAD_CONFIG, NULL);
+#else
+	OpenSSL_add_all_algorithms();
+	OpenSSL_add_all_digests();
+	ERR_load_crypto_strings();
+#endif
+	ERR_clear_error();
 
+	/*add by yangliqiang 20190717,begin*/
+	if((engine=ENGINE_by_id("skf")) != NULL){
+		name = (char *)ENGINE_get_name(engine);
+		printf("engine name :%s \n",name);
+		
+	}
+	else{
+		printf("ENGINE_by_id error!\n");
+		return 0;
+	}
+
+	if (!ENGINE_init(engine)) {
+		printf("Could not initialize engine\n");
+		display_openssl_errors(__LINE__);
+		ret = 1;
+		goto err;
+	}
+
+	//engine = setup_engine("skf", 1);
+
+	
+	ENGINE_load_builtin_engines();
+
+	
+	if (!ENGINE_ctrl_cmd_string(engine, "OPEN_DEVICE", "ES3000GM VCR 1", 0)) {
+		display_openssl_errors(__LINE__);
+		goto err;
+	}
+	/*
+	if (!ENGINE_ctrl_cmd_string(engine, "DEV_AUTH", "7kfcTgCLeYTwwLly", 0)) {
+		display_openssl_errors(__LINE__);
+		goto end;
+	}
+	*/
+
+	if (!ENGINE_ctrl_cmd_string(engine, "OPEN_APP", "KOAL_ECC_APP", 0)) {
+		display_openssl_errors(__LINE__);
+		goto err;
+	}
+	
+	if (!ENGINE_ctrl_cmd_string(engine, "VERIFY_PIN", "123456", 0)) {
+		display_openssl_errors(__LINE__);
+		goto err;
+	}
+
+	if (!ENGINE_ctrl_cmd_string(engine, "OPEN_CONTAINER", "KOAL_ECC", 0)) {
+		display_openssl_errors(__LINE__);
+		goto err;
+	}
+	/*add by yangliqiang 20190717,end*/
+	
 	/* Load encryption & hashing algorithms for the SSL program */
 	SSL_library_init();
 
@@ -320,6 +484,9 @@ err:
 
 	/* Free the SSL_CTX structure */
 	if (ctx) SSL_CTX_free(ctx);
+
+	EVP_MD_CTX_free(ctx);
+	ENGINE_finish(engine);
 
 	return 0;
 
