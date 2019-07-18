@@ -953,7 +953,10 @@ static int skf_sm3_init(EVP_MD_CTX *ctx) {
 	ULONG    ulPubKeyLen =0;
 	ECCPUBLICKEYBLOB  EccPubKey;
 	unsigned char pucId[32] ={0};
+	
+#ifndef OPENSSL_NO_SM2
 	ctx->flags = EVP_MD_CTX_FLAG_SKFENG;
+#endif
 	
 	if((rv = SKF_ExportPublicKey(*gh_container,TRUE,pPubKey,&ulPubKeyLen)) != SAR_OK) {
 		ESKFerr(ESKF_F_SKF_SM3_INIT, ESKF_R_SKF_EXPORT_PUBLIC_KEY_FAILED);
