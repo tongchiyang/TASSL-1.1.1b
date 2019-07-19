@@ -31,6 +31,7 @@ static const char *engine_skf_id = "skf";
 static const char *engine_skf_name = "skf FEITIAN ePass3000GM Engine V1.0.0";
 static const char *skf_conf_section="skf_section";
 static int   g_skf_idx = -1;
+#define _PRINT_FUNNAME   printf("into skf function [%s] \n",__FUNCTION__);
 
 static DEVHANDLE*     gh_dev = NULL;
 static HAPPLICATION*  gh_app = NULL;
@@ -221,11 +222,12 @@ void ctx_log(ENGINE_CTX *ctx, int level, const char *format, ...) {
 }
 
 static ENGINE_CTX* ctx_new(){
+	_PRINT_FUNNAME
 	long eline;
 	char *p;
 	CONF *conf;
 	ENGINE_CTX *ctx;
-
+		
 	ctx = OPENSSL_malloc(sizeof(ENGINE_CTX));
 	if (ctx == NULL)
 		return NULL;
@@ -274,8 +276,9 @@ end:
 }
 
 static ENGINE_CTX *get_ctx(ENGINE *engine) {
-	ENGINE_CTX *ctx;
+	_PRINT_FUNNAME
 
+	ENGINE_CTX *ctx;
 	if (g_skf_idx < 0) {
 		g_skf_idx = ENGINE_get_ex_new_index(0, "skf", NULL, NULL, 0);
 		if (g_skf_idx < 0)
@@ -293,6 +296,8 @@ static ENGINE_CTX *get_ctx(ENGINE *engine) {
 }
 
 static int ctx_finish(ENGINE_CTX *ctx) {
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	if (ctx) {
 		if (ctx->h_dev) {
@@ -307,6 +312,8 @@ static int ctx_finish(ENGINE_CTX *ctx) {
 }
 
 static int ctx_destroy(ENGINE_CTX *ctx) {
+	_PRINT_FUNNAME
+
 	if(ctx){
 		OPENSSL_free(ctx->module);
 		OPENSSL_free(ctx->auth_key);
@@ -330,6 +337,8 @@ static int ctx_destroy(ENGINE_CTX *ctx) {
 
 
 static int ctx_ctrl_set_module(ENGINE_CTX *ctx, const char *modulename) {
+	_PRINT_FUNNAME
+
 	OPENSSL_free(ctx->module);
 	ctx->module = modulename ? OPENSSL_strdup(modulename) : NULL;
 	return 1;
@@ -337,6 +346,8 @@ static int ctx_ctrl_set_module(ENGINE_CTX *ctx, const char *modulename) {
 
 /* Free PIN storage in secure way. */
 static void ctx_destroy_pin(ENGINE_CTX *ctx) {
+	_PRINT_FUNNAME
+
 	if (ctx->pin != NULL) {
 		OPENSSL_cleanse(ctx->pin, ctx->pin_length);
 		OPENSSL_free(ctx->pin);
@@ -346,6 +357,8 @@ static void ctx_destroy_pin(ENGINE_CTX *ctx) {
 }
 
 static int ctx_get_pin(ENGINE_CTX *ctx, const char* token_label, UI_METHOD *ui_method, void *callback_data) {
+	_PRINT_FUNNAME
+
 	UI *ui;
 	char* prompt;
 
@@ -399,6 +412,8 @@ static int ctx_get_pin(ENGINE_CTX *ctx, const char* token_label, UI_METHOD *ui_m
  * @return 1 on success, 0 on failure.
  */
 static int ctx_ctrl_set_pin(ENGINE_CTX *ctx, const char *pin) {
+	_PRINT_FUNNAME
+
 	/* Pre-condition check */
 	if (pin == NULL) {
 		ESKFerr(ESKF_F_SET_USERPIN, ERR_R_PASSED_NULL_PARAMETER);
@@ -420,46 +435,62 @@ static int ctx_ctrl_set_pin(ENGINE_CTX *ctx, const char *pin) {
 }
 
 static int ctx_ctrl_inc_verbose(ENGINE_CTX *ctx) {
+	_PRINT_FUNNAME
+
 	ctx->verbose++;
 	return 1;
 }
 
 static int ctx_ctrl_set_quiet(ENGINE_CTX *ctx) {
+	_PRINT_FUNNAME
+
 	ctx->verbose = -1;
 	return 1;
 }
 
 static int ctx_ctrl_load_cert(ENGINE_CTX *ctx, void *p) {
+	_PRINT_FUNNAME
+
 	return 1;
 }
 
 static int ctx_ctrl_set_init_args(ENGINE_CTX *ctx, const char *init_args_orig) {
+	_PRINT_FUNNAME
+
 	OPENSSL_free(ctx->init_args);
 	ctx->init_args = init_args_orig ? OPENSSL_strdup(init_args_orig) : NULL;
 	return 1;
 }
 
 static int ctx_ctrl_set_user_interface(ENGINE_CTX *ctx, UI_METHOD *ui_method) {
+	_PRINT_FUNNAME
+
 	ctx->ui_method = ui_method;
 	return 1;
 }
 
 static int ctx_ctrl_set_callback_data(ENGINE_CTX *ctx, void *callback_data) {
+	_PRINT_FUNNAME
+
 	ctx->callback_data = callback_data;
 	return 1;
 }
 
 static int ctx_ctrl_force_login(ENGINE_CTX *ctx) {
+	_PRINT_FUNNAME
+
 	ctx->force_login = 1;
 	return 1;
 }
 
 static int ctx_open_dev(ENGINE_CTX *ctx,const char *devname) {
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	
 	if (ctx->h_dev) {
 		ESKFerr(ESKF_F_OPEN_DEV, ESKF_R_DEV_ALREADY_CONNECTED);
-		return 0;
+		return 1;
 	}
 	if ((rv = SKF_ConnectDev((LPSTR)devname, &ctx->h_dev)) != SAR_OK) {
 		ESKFerr(ESKF_F_OPEN_DEV, ESKF_R_SKF_CONNECT_DEV_FAILED);
@@ -473,6 +504,8 @@ static int ctx_open_dev(ENGINE_CTX *ctx,const char *devname) {
 }
 
 static int ctx_dev_auth(ENGINE_CTX *ctx,const char *hexauthkey) {
+	_PRINT_FUNNAME
+
 	int ret = 0;
 	ULONG rv;
 	const EVP_CIPHER *cipher = EVP_sm4_ecb();
@@ -547,6 +580,8 @@ end:
 }
 
 static int ctx_open_app(ENGINE_CTX *ctx,const char *appname) {
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	
 	if (!ctx->h_dev) {
@@ -574,6 +609,8 @@ static int ctx_open_app(ENGINE_CTX *ctx,const char *appname) {
 }
 
 static int ctx_verify_pin(ENGINE_CTX *ctx,const char *userpin) {
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	ULONG retryCount;
 	
@@ -601,8 +638,9 @@ static int ctx_verify_pin(ENGINE_CTX *ctx,const char *userpin) {
 	return 1;
 }
 
-static int ctx_open_container(ENGINE_CTX *ctx,const char *containername)
-{
+static int ctx_open_container(ENGINE_CTX *ctx,const char *containername) {
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	
 	if (!ctx->h_dev) {
@@ -639,6 +677,8 @@ static int ctx_open_container(ENGINE_CTX *ctx,const char *containername)
 }
 
 int ctx_engine_ctrl(ENGINE_CTX *ctx, int cmd, long i, void *p, void (*f)()) {
+	_PRINT_FUNNAME
+
 	(void)i;
 	(void)f;	
 
@@ -684,6 +724,8 @@ int ctx_engine_ctrl(ENGINE_CTX *ctx, int cmd, long i, void *p, void (*f)()) {
 static EVP_PKEY *ctx_load_key(ENGINE_CTX *ctx, const char *s_slot_key_id,
 		UI_METHOD *ui_method, void *callback_data,
 		const int isPrivate, const int login) {
+
+	_PRINT_FUNNAME
 	ULONG rv, len;
 	ECCPUBLICKEYBLOB eccblob;
 	RSAPUBLICKEYBLOB rsablob;
@@ -752,6 +794,8 @@ end:
 }
 
 static EVP_PKEY *ctx_load_pubkey(ENGINE_CTX *ctx, const char *s_key_id,UI_METHOD *ui_method, void *callback_data) {
+	_PRINT_FUNNAME
+
 	EVP_PKEY *pk = NULL;
 
 	ERR_clear_error();
@@ -773,6 +817,8 @@ static EVP_PKEY *ctx_load_pubkey(ENGINE_CTX *ctx, const char *s_key_id,UI_METHOD
 }
 
 static EVP_PKEY *ctx_load_privkey(ENGINE_CTX *ctx, const char *s_key_id,	UI_METHOD *ui_method, void *callback_data) {
+	_PRINT_FUNNAME
+
 	EVP_PKEY *pk = NULL;
 
 	ERR_clear_error();
@@ -846,13 +892,14 @@ static const ENGINE_CMD_DEFN skf_cmd_defns[] = {
 };
 
 static int skf_destroy(ENGINE *engine) {
+	_PRINT_FUNNAME
 	ENGINE_CTX *ctx;
 	int rv = 1;
 
 	ctx = get_ctx(engine);
 	if (ctx == NULL)
 		return 0;
-	
+
 	rv = ctx_destroy(ctx);
 	ENGINE_set_ex_data(engine, g_skf_idx, NULL);
 	ERR_unload_ESKF_strings();
@@ -860,17 +907,27 @@ static int skf_destroy(ENGINE *engine) {
 }
 
 static int skf_init(ENGINE *engine) {
+	_PRINT_FUNNAME
+
 	ENGINE_CTX *ctx;
+	ULONG rv = 0;
 	
 	ctx = get_ctx(engine);
 	if (ctx == NULL)
 		return 0;
 	
-	SKF_LoadLibrary((LPSTR)(ctx->module), NULL);
+	if(SAR_OK != SKF_LoadLibrary((LPSTR)(ctx->module), NULL)){
+		printf("SKF_LoadLibrary error\n");
+		return 0;
+	}	
+
+	ctx_open_dev(ctx,ctx->dev_name);
 	return 1;
 }
 
 static int skf_finish(ENGINE *engine) {
+	_PRINT_FUNNAME
+
 	ENGINE_CTX *ctx;
 	ULONG rv;
 	
@@ -885,6 +942,8 @@ static int skf_finish(ENGINE *engine) {
 }
 
 static int skf_ctrl(ENGINE *engine, int cmd, long i, void *p, void (*f)()) {
+	_PRINT_FUNNAME
+
 	ENGINE_CTX *ctx = NULL;
 	ctx = get_ctx(engine);
 	if (ctx == NULL)
@@ -894,6 +953,8 @@ static int skf_ctrl(ENGINE *engine, int cmd, long i, void *p, void (*f)()) {
 }
 
 static EVP_PKEY *skf_load_pubkey(ENGINE *engine, const char *s_key_id,	UI_METHOD *ui_method, void *callback_data) {
+	_PRINT_FUNNAME
+
 	ENGINE_CTX *ctx;
 	ctx = get_ctx(engine);
 	if (ctx == NULL)
@@ -903,6 +964,8 @@ static EVP_PKEY *skf_load_pubkey(ENGINE *engine, const char *s_key_id,	UI_METHOD
 }
 
 static EVP_PKEY *skf_load_privkey(ENGINE *engine, const char *s_key_id,	UI_METHOD *ui_method, void *callback_data) {
+	_PRINT_FUNNAME
+
 	ENGINE_CTX *ctx;
 	EVP_PKEY *pkey;
 
@@ -925,6 +988,8 @@ static EVP_PKEY *skf_load_privkey(ENGINE *engine, const char *s_key_id,	UI_METHO
 
 //skf rand bgein.
 int skf_rand_bytes(unsigned char *buf, int num) {
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	
 	if ((rv = SKF_GenRandom(*gh_dev, buf, (ULONG)num)) != SAR_OK) {
@@ -935,18 +1000,27 @@ int skf_rand_bytes(unsigned char *buf, int num) {
 	return 1;
 }
 
+static int skf_rand_status(void) {
+	_PRINT_FUNNAME
+
+    return 1;
+}
+
+
 static RAND_METHOD skf_rand = {
 	NULL,
 	skf_rand_bytes,
 	NULL,
 	NULL,
 	skf_rand_bytes,
-	NULL,
+	skf_rand_status,
 };
 //skf rand end.
 
 //skf sm3 begin.
 static int skf_sm3_init(EVP_MD_CTX *ctx) {
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	ULONG ulIdLen = 0;
 	unsigned char *pPubKey = NULL;
@@ -996,12 +1070,15 @@ static int skf_sm3_init(EVP_MD_CTX *ctx) {
 }
 
 static int skf_sm3_update(EVP_MD_CTX *ctx, const void *data, size_t count) {
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	BYTE *pbData = (BYTE *)data;
 	ULONG ulDataLen = (ULONG)count;
 
 	if ((rv = SKF_DigestUpdate(ctx->md_data, pbData, ulDataLen)) != SAR_OK) {
 		ESKFerr(ESKF_F_SKF_SM3_UPDATE, ESKF_R_SKF_DIGEST_UPDATE_FAILED);
+		SKF_CloseHandle(ctx->md_data);
 		return 0;
 	}
 
@@ -1011,6 +1088,8 @@ static int skf_sm3_update(EVP_MD_CTX *ctx, const void *data, size_t count) {
 
 
 static int skf_sm3_final(EVP_MD_CTX *ctx, unsigned char *md) {
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	BYTE *pHashData = (BYTE *)md;
 	ULONG ulHashLen = SM3_DIGEST_LENGTH;
@@ -1030,7 +1109,7 @@ static int skf_sm3_final(EVP_MD_CTX *ctx, unsigned char *md) {
 
 static const EVP_MD skf_sm3 = {
 	NID_sm3,
-	NID_sm3WithRSAEncryption,
+	NID_sm3WithSM2Sign,
 	SM3_DIGEST_LENGTH,
 	0,
 	skf_sm3_init,
@@ -1046,6 +1125,7 @@ static int skf_digest_nids[] = {NID_sm3, 0};
 static int skf_num_digests = sizeof(skf_digest_nids-1)/sizeof(skf_digest_nids[0]);
 
 static int skf_digests(ENGINE *e, const EVP_MD **digest, const int **nids, int nid) {
+	_PRINT_FUNNAME
 	if (!digest) {
 		*nids = skf_digest_nids;
 		return skf_num_digests;
@@ -1077,6 +1157,80 @@ static int ECDSA_SIG_set_ECCSIGNATUREBLOB(ECDSA_SIG *sig, const ECCSIGNATUREBLOB
 
 	return 1;
 }
+
+static int ECDSA_SIG_get_ECCSIGNATUREBLOB(const ECDSA_SIG *sig, ECCSIGNATUREBLOB *blob) {
+	if ((BN_num_bytes(sig->r) > sizeof(blob->r)) || (BN_num_bytes(sig->s) > sizeof(blob->s))) {
+		GMAPIerr(GMAPI_F_ECDSA_SIG_GET_ECCSIGNATUREBLOB, GMAPI_R_INVALID_BIGNUM_LENGTH);
+		return 0;
+	}
+
+	if (!BN_bn2bin(sig->r, blob->r + sizeof(blob->r) - BN_num_bytes(sig->r))) {
+		GMAPIerr(GMAPI_F_ECDSA_SIG_GET_ECCSIGNATUREBLOB, ERR_R_BN_LIB);
+		return 0;
+	}
+
+	if (!BN_bn2bin(sig->s, blob->s + sizeof(blob->s) - BN_num_bytes(sig->s))) {
+		GMAPIerr(GMAPI_F_ECDSA_SIG_GET_ECCSIGNATUREBLOB, ERR_R_BN_LIB);
+		return 0;
+	}
+
+	return 1;
+
+}
+
+static int EC_KEY_get_ECCPUBLICKEYBLOB(EC_KEY *ec_key, ECCPUBLICKEYBLOB *blob)
+{
+	int ret = 0;
+	BIGNUM *x = NULL;
+	BIGNUM *y = NULL;
+	BN_CTX *bn_ctx = NULL;
+	const EC_GROUP *group = EC_KEY_get0_group(ec_key);
+	const EC_POINT *point = EC_KEY_get0_public_key(ec_key);
+
+	if (EC_GROUP_get_degree(group) > ECC_MAX_MODULUS_BITS_LEN) {
+		GMAPIerr(GMAPI_F_EC_KEY_GET_ECCPUBLICKEYBLOB, GMAPI_R_INVALID_KEY_LENGTH);
+		goto end;
+	}
+
+	x = BN_new();
+	y = BN_new();
+	bn_ctx = BN_CTX_new();
+	if (!x || !y || !bn_ctx) {
+		GMAPIerr(GMAPI_F_EC_KEY_GET_ECCPUBLICKEYBLOB, ERR_R_BN_LIB);
+		goto end;
+	}
+
+	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) == NID_X9_62_prime_field) {
+		if (!EC_POINT_get_affine_coordinates_GFp(group, point, x, y, bn_ctx)) {
+			GMAPIerr(GMAPI_F_EC_KEY_GET_ECCPUBLICKEYBLOB, ERR_R_EC_LIB);
+			goto end;
+		}
+	} else  {
+		if (!EC_POINT_get_affine_coordinates_GF2m(group, point, x, y, bn_ctx)) {
+			GMAPIerr(GMAPI_F_EC_KEY_GET_ECCPUBLICKEYBLOB, ERR_R_EC_LIB);
+			goto end;
+		}
+	}
+
+	memset(blob, 0, sizeof(*blob));
+	blob->BitLen = EC_GROUP_get_degree(group);
+	if (!BN_bn2bin(x, blob->XCoordinate + sizeof(blob->XCoordinate) - BN_num_bytes(x))) {
+		GMAPIerr(GMAPI_F_EC_KEY_GET_ECCPUBLICKEYBLOB, ERR_R_BN_LIB);
+		goto end;
+	}
+	if (!BN_bn2bin(y, blob->YCoordinate + sizeof(blob->YCoordinate) - BN_num_bytes(y))) {
+		GMAPIerr(GMAPI_F_EC_KEY_GET_ECCPUBLICKEYBLOB, ERR_R_BN_LIB);
+		goto end;
+	}
+
+	ret = 1;
+end:
+	BN_free(x);
+	BN_free(y);
+	BN_CTX_free(bn_ctx);
+	return ret;
+}
+
 
 //skf rsa sign begin.
 static int skf_rsa_sign(int type, const unsigned char *m, unsigned int mlen,
@@ -1128,9 +1282,55 @@ static void printHex(unsigned char* _buf,int _lenth){
         printf("\n------------hex end------------\n");
 }
 
+static int skf_sm2_init(EC_KEY* _key){
+	_PRINT_FUNNAME
+	return 1;
+}
+
+static void skf_sm2_finish(EC_KEY* _key){
+	_PRINT_FUNNAME
+	return;
+}
+
+static int skf_sm2_ec_keygen(EC_KEY* _key){
+	int rv;
+	_PRINT_FUNNAME
+	_key = EC_KEY_new_by_curve_name(NID_sm2);
+	if (!_key) {
+        printf("Create SM2 Key Object error.\n");
+        goto err;	
+    }
+    
+    if (EC_KEY_generate_key(_key) == 0)  {
+        printf("Error Of Generate SM2 Key.\n");
+        goto err;
+    }
+	return 1;
+	
+err:
+	if (_key) EC_KEY_free(_key);
+	return 0;
+	/*
+	ECCPUBLICKEYBLOB  EccPubBlob;
+	rv = SKF_GenECCKeyPair(*gh_container, SGD_SM2_1, &EccPubBlob);
+	if(rv != SAR_OK) {
+		printf("SKF_GenECCKeyPair error(0x%X)\n", rv);
+		return 0;
+	}
+	printf("sm2 skf gen ecc pair success\n");
+	_key = EC_KEY_new_from_ECCPUBLICKEYBLOB(&EccPubBlob);
+	
+	//note, usbkey could not export the private key
+	//ECCPRIVATEKEYBLOB_set_private_key(sm2_ctx->priKey, eckey->priv_key);
+	return 1;
+	*/
+}
+
 static ECDSA_SIG *skf_sm2sign_sig(const unsigned char *dgst, int dgstlen,
 	const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *ec_key)
 {
+	_PRINT_FUNNAME
+
 	ECDSA_SIG *ret = NULL;
 	BYTE *pbDigest = (BYTE *)dgst;
 	ULONG ulDigestLen = (ULONG)dgstlen;
@@ -1174,28 +1374,104 @@ end:
 	return ret;
 }
 
+static int skf_sm2_sign(int type, const unsigned char *dgst, int dlen, unsigned char
+                *sig, unsigned int *siglen, const BIGNUM *kinv,
+                const BIGNUM *r, EC_KEY *eckey) {
+    _PRINT_FUNNAME
+    ECDSA_SIG *s;
+	
+	if (!(s = skf_sm2sign_sig(dgst, dlen, kinv, r, eckey))) {
+		*siglen = 0;
+		return 0;
+	}
+	*siglen = i2d_ECDSA_SIG(s, &sig);
+	ECDSA_SIG_free(s);
+	return 1;
+}
+
+static int skf_sm2_verify_sig(const unsigned char *dgst, int dgstlen,
+                  const ECDSA_SIG *sig, EC_KEY *ec_key){
+    _PRINT_FUNNAME
+	ECDSA_SIG *ret = NULL;
+	BYTE *pbDigest = (BYTE *)dgst;
+	ULONG ulDigestLen = (ULONG)dgstlen;
+	ECCSIGNATUREBLOB sigBlob;
+	ECCPUBLICKEYBLOB pubKey;
+	ULONG rv;
+	int ok = 0;
+	int i = 0;
+
+	
+	if(1 != ECDSA_SIG_get_ECCSIGNATUREBLOB(sig, &sigBlob)) {
+		printf("ECDSA_SIG_get_ECCSIGNATUREBLOB error\n");
+		return 0;
+	}
+	if(1 != EC_KEY_get_ECCPUBLICKEYBLOB(ec_key, &pubKey)) {
+		printf("EC_KEY_get_ECCPUBLICKEYBLOB error\n");
+		return 0;
+	}
+
+	rv = SKF_ECCVerify(*gh_dev,&pubKey,dgst,dgstlen,&sigBlob);
+	if(rv != SAR_OK){
+		printf("SKF_ECCVerify error，eroor = [0x%08x]\n", rv);
+		return 0;
+	}
+	else {
+		printf("SKF_ECCVerify success\n");
+	}
+	
+	return 1;
+}
+
+
+static int skf_sm2_verify(int type, const unsigned char *dgst, int dgstlen,
+              const unsigned char *sig, int siglen, EC_KEY *ec_key){
+	_PRINT_FUNNAME
+	ECDSA_SIG *s;
+	const unsigned char *p = sig;
+	unsigned char *der = NULL;
+	int derlen = -1;
+	int ret = -1;
+
+	if (!(s = ECDSA_SIG_new())) {
+		return ret;
+	}
+	if (!d2i_ECDSA_SIG(&s, &p, siglen)) {
+		goto err;
+	}
+	derlen = i2d_ECDSA_SIG(s, &der);
+	if (derlen != siglen || memcmp(sig, der, derlen)) {
+		goto err;
+	}
+
+	ret = skf_sm2_verify_sig(dgst, dgstlen, s, ec_key);
+
+err:
+	if (derlen > 0) {
+		OPENSSL_cleanse(der, derlen);
+		OPENSSL_free(der);
+	}
+
+	ECDSA_SIG_free(s);
+	return ret;
+}
+
 static EC_KEY_METHOD skf_sm2sign = {
-	"SKF-SM2 signature)",            //name
+	"SKF-SM2 EC Method",             //name
 	0,                               //flags
-	NULL,                            //init
-	NULL,                            //finish
+	skf_sm2_init,                    //init
+	skf_sm2_finish,                  //finish
 	NULL,                            //copy
 	NULL,                            //set_group
 	NULL,                            //set_private
 	NULL,                            //set_public
-	NULL,                            //keygen
+	skf_sm2_ec_keygen,               //keygen
 	NULL,                            //compute_key
-	NULL,                            //sign
+	skf_sm2_sign,                    //sign
 	NULL,                            //sign_setup
 	skf_sm2sign_sig,                 //sign_sig
-	NULL,                            //verify
-	NULL,                            //verify_sig
-#ifndef OPENSSL_NO_SM2
-	NULL,                            //encrypt
-	NULL,                            //do_encrypt
-	NULL,                            //decrypt
-	NULL                             //do_decrypt
-#endif
+	skf_sm2_verify,                  //verify
+	skf_sm2_verify_sig,              //verify_sig
 };
 	
 //skf rsa sign end.
@@ -1205,7 +1481,7 @@ static int skf_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,	const 
 	ULONG rv;
 	ULONG ulAlgID;
 	BLOCKCIPHERPARAM param;
-	
+	_PRINT_FUNNAME
 	switch (EVP_CIPHER_CTX_nid(ctx)) {
 	/*
 	case NID_ssf33_ecb:
@@ -1283,10 +1559,14 @@ static int skf_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,	const 
 
 
 static int skf_cipher_cleanup(EVP_CIPHER_CTX *ctx) {
+	_PRINT_FUNNAME
+
 	return 1;
 }
 
 static int _cipher_mode(EVP_CIPHER_CTX *ctx, unsigned char *out,	const unsigned char *in, size_t len) {
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	BLOCKCIPHERPARAM param;
 	ULONG ulDataLen = 0;
@@ -1386,6 +1666,8 @@ static int _cipher_mode(EVP_CIPHER_CTX *ctx, unsigned char *out,	const unsigned 
 }
 
 static int _update_mode(EVP_CIPHER_CTX *ctx, unsigned char *out,	const unsigned char *in, size_t len){
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	ULONG ulDataLen = len;
 	ULONG ulTempCipherLen = len;
@@ -1477,6 +1759,8 @@ static int _update_mode(EVP_CIPHER_CTX *ctx, unsigned char *out,	const unsigned 
 }
 
 static int _final_mode(EVP_CIPHER_CTX *ctx, unsigned char *out,	const unsigned char *in, size_t len){
+	_PRINT_FUNNAME
+
 	ULONG rv;
 	ULONG ulDataLen = len;
 	ULONG ulTempCipherLen = len;
@@ -1503,6 +1787,8 @@ static int _final_mode(EVP_CIPHER_CTX *ctx, unsigned char *out,	const unsigned c
 }
 
 static int skf_cipher_do(EVP_CIPHER_CTX *ctx, unsigned char *out,	const unsigned char *in, size_t len) {
+	_PRINT_FUNNAME
+
 	switch(ctx->step){
 		case 0:
 			return _cipher_mode(ctx,out,in,len);
