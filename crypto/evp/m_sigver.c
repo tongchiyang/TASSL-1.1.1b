@@ -237,7 +237,7 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
     if (EVP_DigestVerifyUpdate(ctx, tbs, tbslen) <= 0)
         return -1;
 
-	if(eckey->engine != NULL){
+	if(ctx->engine != NULL){
 		if(!strcmp(ctx->engine->id,"skf"))
 			ctx->flags = EVP_MD_CTX_FLAG_FINALISE;  //add by yangliqiang
 	}
