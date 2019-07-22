@@ -82,16 +82,18 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 #ifndef OPENSSL_NO_CNSM
     if (ctx->pctx->pkey->type == EVP_PKEY_EC)
     {
-    	if(strcmp(ctx->engine->id,"skf")) {  //yangliqiang add for skf engine,have compute Z in skf engine lib,20190718.
-	        if (EC_GROUP_get_curve_name(EC_KEY_get0_group(ctx->pctx->pkey->pkey.ec)) == NID_sm2)
-	        {
-	            /*Need Set SM2 Sign And Verify Extra Data: Add Message Z*/
-	            unsigned char ex_dgst[EVP_MAX_MD_SIZE];
-	            if (!sm2_compute_z_digest(ex_dgst, EVP_sm3(), "1234567812345678", strlen("1234567812345678"), ctx->pctx->pkey->pkey.ec))
-	                return 0;
-	            if (!EVP_DigestUpdate(ctx, ex_dgst, 32))
-	                return 0;
-	        }
+    	if(ctx->engine != NULL) {
+	    	if(strcmp(ctx->engine->id,"skf")) {  //yangliqiang add for skf engine,have compute Z in skf engine lib,20190718.
+		        if (EC_GROUP_get_curve_name(EC_KEY_get0_group(ctx->pctx->pkey->pkey.ec)) == NID_sm2)
+		        {
+		            /*Need Set SM2 Sign And Verify Extra Data: Add Message Z*/
+		            unsigned char ex_dgst[EVP_MAX_MD_SIZE];
+		            if (!sm2_compute_z_digest(ex_dgst, EVP_sm3(), "1234567812345678", strlen("1234567812345678"), ctx->pctx->pkey->pkey.ec))
+		                return 0;
+		            if (!EVP_DigestUpdate(ctx, ex_dgst, 32))
+		                return 0;
+		        }
+	    	}
     	}
     }
 #endif
@@ -234,9 +236,10 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
         return ctx->pctx->pmeth->digestverify(ctx, sigret, siglen, tbs, tbslen);
     if (EVP_DigestVerifyUpdate(ctx, tbs, tbslen) <= 0)
         return -1;
-	
-	if(!strcmp(ctx->engine->id,"skf"))
-		ctx->flags = EVP_MD_CTX_FLAG_FINALISE;  //add by yangliqiang
 
+	if(eckey->engine != NULL){
+		if(!strcmp(ctx->engine->id,"skf"))
+			ctx->flags = EVP_MD_CTX_FLAG_FINALISE;  //add by yangliqiang
+	}
 	return EVP_DigestVerifyFinal(ctx, sigret, siglen);
 }

@@ -42,9 +42,11 @@ int ECDSA_verify(int type, const unsigned char *dgst, int dgst_len,
                  const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
 {
     #ifndef OPENSSL_NO_CNSM
-	if(EC_KEY_NOT_SKF_ENGINE){ //add by yangliqiang
-    	if (EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey)) == NID_sm2)
-       		return sm2_verify(dgst, dgst_len, sigbuf, sig_len, eckey);
+	if(eckey->engine!= NULL) {
+		if(EC_KEY_NOT_SKF_ENGINE){ //add by yangliqiang
+	    	if (EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey)) == NID_sm2)
+	       		return sm2_verify(dgst, dgst_len, sigbuf, sig_len, eckey);
+		}
 	}
     #endif   
     if (eckey->meth->verify != NULL)
