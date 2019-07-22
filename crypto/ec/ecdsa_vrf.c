@@ -10,6 +10,10 @@
 #include <openssl/ec.h>
 #include "ec_lcl.h"
 #include <openssl/err.h>
+#include "internal/eng_int.h"
+#include <openssl/ossl_typ.h>
+
+
 
 #define EC_KEY_NOT_SKF_ENGINE  strcmp(eckey->engine->id,"skf")
 
