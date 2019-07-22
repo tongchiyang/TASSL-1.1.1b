@@ -12,7 +12,10 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <openssl/ossl_typ.h>
+
 #include "internal/evp_int.h"
+#include "internal/eng_int.h"
 #include "evp_locl.h"
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
