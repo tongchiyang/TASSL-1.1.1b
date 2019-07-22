@@ -31,7 +31,7 @@ static const char *engine_skf_id = "skf";
 static const char *engine_skf_name = "skf FEITIAN ePass3000GM Engine V1.0.0";
 static const char *skf_conf_section="skf_section";
 static int   g_skf_idx = -1;
-#define _PRINT_FUNNAME   printf("into skf function [%s]\t",__FUNCTION__); printf("process id: %d\tthread id: %lu\n", getpid(),pthread_self());
+#define _PRINT_FUNNAME   printf("into skf function [%-15s]\t",__FUNCTION__); printf("process id: %d\tthread id: %lu\n", getpid(),pthread_self());
 
 static DEVHANDLE*     gh_dev = NULL;
 static HAPPLICATION*  gh_app = NULL;

@@ -11,6 +11,8 @@
 #include "ec_lcl.h"
 #include <openssl/err.h>
 
+#define EC_KEY_NOT_SKF_ENGINE  strcmp(eckey->engine->id,"skf")
+
 /*-
  * returns
  *      1: correct signature
@@ -36,8 +38,10 @@ int ECDSA_verify(int type, const unsigned char *dgst, int dgst_len,
                  const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
 {
     #ifndef OPENSSL_NO_CNSM
-    if (EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey)) == NID_sm2)
-        return sm2_verify(dgst, dgst_len, sigbuf, sig_len, eckey);
+	if(EC_KEY_NOT_SKF_ENGINE){ //add by yangliqiang
+    	if (EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey)) == NID_sm2)
+       		return sm2_verify(dgst, dgst_len, sigbuf, sig_len, eckey);
+	}
     #endif   
     if (eckey->meth->verify != NULL)
         return eckey->meth->verify(type, dgst, dgst_len, sigbuf, sig_len,

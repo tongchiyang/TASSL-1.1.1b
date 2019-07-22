@@ -234,5 +234,9 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
         return ctx->pctx->pmeth->digestverify(ctx, sigret, siglen, tbs, tbslen);
     if (EVP_DigestVerifyUpdate(ctx, tbs, tbslen) <= 0)
         return -1;
-    return EVP_DigestVerifyFinal(ctx, sigret, siglen);
+	
+	if(!strcmp(ctx->engine->id,"skf"))
+		ctx->flags = EVP_MD_CTX_FLAG_FINALISE;  //add by yangliqiang
+
+	return EVP_DigestVerifyFinal(ctx, sigret, siglen);
 }
