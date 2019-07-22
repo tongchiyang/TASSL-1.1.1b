@@ -79,7 +79,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 #ifndef OPENSSL_NO_CNSM
     if (ctx->pctx->pkey->type == EVP_PKEY_EC)
     {
-    	if(ctx->flags != EVP_MD_CTX_FLAG_SKFENG) {  //yangliqiang add for skf engine,have compute Z in skf engine lib,20190718.
+    	if(strcmp(ctx->engine->id,"skf")) {  //yangliqiang add for skf engine,have compute Z in skf engine lib,20190718.
 	        if (EC_GROUP_get_curve_name(EC_KEY_get0_group(ctx->pctx->pkey->pkey.ec)) == NID_sm2)
 	        {
 	            /*Need Set SM2 Sign And Verify Extra Data: Add Message Z*/

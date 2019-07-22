@@ -11,7 +11,6 @@
 
 #ifndef OPENSSL_NO_SM2
 # define EVP_MD_CTX_FLAG_UPDATED         0x0400
-# define EVP_MD_CTX_FLAG_SKFENG          0x0800
 #endif
 
 
