@@ -31,7 +31,7 @@ static const char *engine_skf_id = "skf";
 static const char *engine_skf_name = "skf FEITIAN ePass3000GM Engine V1.0.0";
 static const char *skf_conf_section="skf_section";
 static int   g_skf_idx = -1;
-#define _PRINT_FUNNAME   printf("into skf function [%s] \n",__FUNCTION__);
+#define _PRINT_FUNNAME   printf("into skf function [%s]\t",__FUNCTION__); printf("process id: %d\tthread id: %lu\n", getpid(),pthread_self());
 
 static DEVHANDLE*     gh_dev = NULL;
 static HAPPLICATION*  gh_app = NULL;
@@ -1028,10 +1028,6 @@ static int skf_sm3_init(EVP_MD_CTX *ctx) {
 	ECCPUBLICKEYBLOB  EccPubKey;
 	unsigned char pucId[32] ={0};
 	
-#ifndef OPENSSL_NO_SM2
-	ctx->flags = EVP_MD_CTX_FLAG_SKFENG;
-#endif
-	
 	if((rv = SKF_ExportPublicKey(*gh_container,TRUE,pPubKey,&ulPubKeyLen)) != SAR_OK) {
 		ESKFerr(ESKF_F_SKF_SM3_INIT, ESKF_R_SKF_EXPORT_PUBLIC_KEY_FAILED);
 		return 0;
@@ -1061,7 +1057,7 @@ static int skf_sm3_init(EVP_MD_CTX *ctx) {
 		ESKFerr(ESKF_F_SKF_SM3_INIT, ESKF_R_SKF_DIGEST_INIT_FAILED);
 		return 0;
 	}
-
+	printf("ctx->md_data=[%x],&ctx->md_data=[%x]\n",ctx->md_data,&ctx->md_data);
 	//TODO free
 	if(pPubKey != NULL){
 		free(pPubKey);
@@ -1075,7 +1071,7 @@ static int skf_sm3_update(EVP_MD_CTX *ctx, const void *data, size_t count) {
 	ULONG rv;
 	BYTE *pbData = (BYTE *)data;
 	ULONG ulDataLen = (ULONG)count;
-
+	printf("ctx->md_data=[%x],&ctx->md_data=[%x]\n",ctx->md_data,&ctx->md_data);
 	if ((rv = SKF_DigestUpdate(ctx->md_data, pbData, ulDataLen)) != SAR_OK) {
 		ESKFerr(ESKF_F_SKF_SM3_UPDATE, ESKF_R_SKF_DIGEST_UPDATE_FAILED);
 		SKF_CloseHandle(ctx->md_data);
@@ -1093,7 +1089,7 @@ static int skf_sm3_final(EVP_MD_CTX *ctx, unsigned char *md) {
 	ULONG rv;
 	BYTE *pHashData = (BYTE *)md;
 	ULONG ulHashLen = SM3_DIGEST_LENGTH;
-	
+	printf("ctx->md_data=[%x],&ctx->md_data=[%x]\n",ctx->md_data,&ctx->md_data);
 	if ((rv = SKF_DigestFinal(ctx->md_data, pHashData, &ulHashLen)) != SAR_OK) {
 		ESKFerr(ESKF_F_SKF_SM3_FINAL, ESKF_R_SKF_DIGEST_FINAL_FAILED);
 		return 0;
