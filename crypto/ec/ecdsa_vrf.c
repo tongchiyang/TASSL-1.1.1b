@@ -48,6 +48,10 @@ int ECDSA_verify(int type, const unsigned char *dgst, int dgst_len,
 	       		return sm2_verify(dgst, dgst_len, sigbuf, sig_len, eckey);
 		}
 	}
+	else{
+		if (EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey)) == NID_sm2)
+	       	return sm2_verify(dgst, dgst_len, sigbuf, sig_len, eckey);
+	}
     #endif   
     if (eckey->meth->verify != NULL)
         return eckey->meth->verify(type, dgst, dgst_len, sigbuf, sig_len,
